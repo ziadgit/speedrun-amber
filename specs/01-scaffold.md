@@ -49,11 +49,13 @@ in `AGENT.md`. Install latest; pin nothing by hand.
 | `MODEL` | none | required only when the copilot handler is built; `loadConfig` leaves it `undefined` and `createCopilotHandler` throws a clear error naming `MODEL` |
 | `DARWIN_MCP_URL` | `https://mcp.darwin.so/mcp` | |
 | `APP_ORIGIN` | `http://localhost:5173` | must parse as a URL origin; reject a path or `*` |
+| `ANTHROPIC_WORKSPACE_ID` | none | optional; only for an Anthropic key not scoped to a workspace (spec 03 "Model") |
 | `PORT` | `4000` | integer 0–65535 (0 allowed for tests); empty counts as unset, like the others |
 
 `.env.example` lists all five plus the provider key the chosen `MODEL` needs
 (e.g. `ANTHROPIC_API_KEY=`), with `MODEL=anthropic:claude-sonnet-5-5` as the
-example value, plus `COPILOTKIT_TELEMETRY_DISABLED=true`. The missing-`MODEL`
+example value, plus `COPILOTKIT_TELEMETRY_DISABLED=true` and an empty
+`ANTHROPIC_WORKSPACE_ID=` with a one-line comment saying when it is needed. The missing-`MODEL`
 error's example uses the same `anthropic:` form. Bun loads `.env` itself; no dotenv package. `.env` is gitignored.
 
 ## Server (`src/server.ts`)

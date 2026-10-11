@@ -19,6 +19,28 @@ truth**: if names or option shapes differ (e.g. how instructions or the model
 string are passed, whether the handler is a fetch handler), follow the real API
 and fix this spec and the overview in the same loop.
 
+## Model
+Live run on 2026-10-11 failed with RUN_ERROR: "This API key is not scoped to a
+workspace, so this request must include the anthropic-workspace-id header".
+Keys made at the organization level need that header on every request.
+
+- `config.anthropicWorkspaceId` comes from `ANTHROPIC_WORKSPACE_ID` (read only in
+  `config.ts`).
+- When it is set and the `MODEL` provider is `anthropic` (prefix before the first
+  `:` or `/`, case-insensitive), `BuiltInAgent` gets a `LanguageModel` instance
+  instead of the string: `createAnthropic({ headers: { "anthropic-workspace-id": id } })(modelName)`
+  from `@ai-sdk/anthropic`. `BuiltInAgent`'s `model` accepts `string | LanguageModel`
+  (verified in the installed `.d.ts`). The provider still reads
+  `ANTHROPIC_API_KEY` from the environment itself.
+- Otherwise `MODEL` is passed through as a string, unchanged.
+- Add `@ai-sdk/anthropic` as a direct dependency (it is only transitive today),
+  using the same major version as the copy `@copilotkit/runtime` depends on, so
+  there is one `LanguageModel` type.
+- Put the choice in an exported pure-ish function, e.g. `agentModel(config, fetch?)`,
+  so a test can inject `fetch` into `createAnthropic` and assert that the request
+  the model sends carries `anthropic-workspace-id`, with no network. A second test
+  checks that without the variable the string comes back unchanged.
+
 ## Instructions (`src/instructions.ts`)
 `AGENT_INSTRUCTIONS` is passed as the agent's system prompt. It covers:
 

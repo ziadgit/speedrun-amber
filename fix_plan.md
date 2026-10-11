@@ -40,3 +40,6 @@ page tells its parent frame what changed.
 - [x] P0 Minify the chat bundle: `minify: true` in `createChatHandler`'s `Bun.build`, `--minify` in the `build` script; record the new bundle size in `AGENT.md` (spec 04 Serving)
 - [x] P1 `/mcp` rejects a `Host` other than `127.0.0.1:<port>`, `localhost:<port>` or `[::1]:<port>` with 403; test with a spoofed Host (spec 01 "`/mcp` also checks the Host header")
 - [x] P2 Empty `PORT=` falls back to 4000 like the other variables; add the case to `config.test.ts` (spec 01 Config)
+
+### Live-run fixes 2026-10-11 — 🧠 xhigh
+- [ ] P0 Send `anthropic-workspace-id` when `ANTHROPIC_WORKSPACE_ID` is set: config field, `@ai-sdk/anthropic` direct dep, `agentModel()` in `runtime.ts`, header test with injected fetch, `.env.example` line (spec 03 "Model", spec 01 Config)
