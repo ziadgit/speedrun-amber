@@ -164,6 +164,21 @@ describe("searchJobs", () => {
     });
   });
 
+  test("search_jobs greenhouse decodes entities inside the HTML", async () => {
+    const body = JSON.stringify({
+      jobs: [
+        {
+          title: "A",
+          absolute_url: "https://boards.greenhouse.io/acme/jobs/9",
+          content: "&lt;p&gt;R&amp;amp;D&amp;nbsp;team &amp;mdash; it&amp;#39;s great&lt;/p&gt;",
+        },
+      ],
+    });
+    const r = await searchJobs(fakeBoard(body), { board: "greenhouse", company: "acme" });
+    const jobs = (r.structuredContent as { jobs: { description: string }[] }).jobs;
+    expect(jobs[0]!.description).toBe("R&D team \u2014 it's great");
+  });
+
   test("lever: array body, null location, company from input", async () => {
     const r = await searchJobs(fakeBoard(await fixture("lever")), { board: "lever", company: "acme" });
     const jobs = (r.structuredContent as { jobs: { title: string; location: string | null; company: string }[] }).jobs;

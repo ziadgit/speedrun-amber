@@ -134,14 +134,17 @@ const BOARD_URLS: Record<SearchJobsInput["board"], (company: string) => string> 
 const COMPANY_RE = /^[a-z0-9-]{1,64}$/;
 const DESCRIPTION_MAX = 1500;
 
-function unescapeHtml(s: string): string {
-  return s
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&");
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", mdash: "\u2014", ndash: "\u2013",
+};
+
+// One pass, so `&amp;lt;` becomes `&lt;` and not `<`.
+function decodeEntities(s: string): string {
+  return s.replace(/&(?:#(\d{1,7})|#[xX]([0-9a-fA-F]{1,6})|([a-z]+));/g, (m, dec, hex, name) => {
+    if (name) return NAMED_ENTITIES[name] ?? m;
+    const cp = dec ? Number(dec) : parseInt(hex, 16);
+    return cp > 0 && cp <= 0x10ffff && (cp < 0xd800 || cp > 0xdfff) ? String.fromCodePoint(cp) : m;
+  });
 }
 
 function stripHtml(s: string): string {
@@ -175,7 +178,7 @@ function parseBoard(board: SearchJobsInput["board"], body: unknown): BoardJob[] 
       title = str(j.title);
       url = str(j.absolute_url);
       location = str(rec(j.location).name);
-      description = stripHtml(unescapeHtml(str(j.content) ?? ""));
+      description = decodeEntities(stripHtml(decodeEntities(str(j.content) ?? "")));
       company = str(j.company_name);
     } else if (board === "lever") {
       title = str(j.text);

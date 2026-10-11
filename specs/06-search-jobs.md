@@ -20,7 +20,7 @@ palantir, ramp). Response shapes:
 
 | Board | Jobs at | title | location | url | description |
 | --- | --- | --- | --- | --- | --- |
-| greenhouse | `body.jobs[]` (also `meta`) | `title` | `location.name` | `absolute_url` | `content` (HTML, entity-escaped: unescape, then strip tags) |
+| greenhouse | `body.jobs[]` (also `meta`) | `title` | `location.name` | `absolute_url` | `content` (HTML, entity-escaped: decode entities, strip tags, decode entities again) |
 | lever | body is the array | `text` | `categories.location` | `hostedUrl` | `descriptionPlain` |
 | ashby | `body.jobs[]` (also `apiVersion`) | `title` (may have stray spaces: trim) | `location` | `jobUrl` | `descriptionPlain` |
 
