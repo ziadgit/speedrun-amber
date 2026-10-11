@@ -1,7 +1,8 @@
-import { CopilotChat, CopilotKitProvider, useAgent, useAgentContext } from "@copilotkit/react-core/v2";
+import { CopilotChat, CopilotKitProvider, useAgent, useAgentContext, useCopilotKit, useRenderTool } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { bareToolName, jobCards, tailoredCard, tailorMessage, toolPayload, type JobCard } from "./cards";
 import { createChangeTracker } from "./messages";
 import { readResumeId, rememberResumeId, uploadCv } from "./resume";
 import { catalogLabel, isActiveStatus, POLL_MS, resumeChip, resumeView, timeSavedLabel, type ResumeView } from "./strip";
@@ -88,6 +89,78 @@ function AviCVStrip({ appOrigin, resumeId }: { appOrigin: string; resumeId: stri
   );
 }
 
+const cardStyle = { border: "1px solid #e5e7eb", borderRadius: 8, padding: 10, margin: "6px 0", fontSize: 14 } as const;
+
+function JobCardView({ card, onTailor }: { card: JobCard; onTailor: (card: JobCard) => void }) {
+  return (
+    <div style={cardStyle}>
+      <strong>{card.title}</strong> · {card.company}
+      {card.scorePct !== null && <span> · {card.scorePct}% match</span>}
+      <div style={{ color: "#4b5563" }}>{[card.location, card.salary].filter(Boolean).join(" · ")}</div>
+      <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
+        {card.url && (
+          <a href={card.url} target="_blank" rel="noopener noreferrer">
+            Apply
+          </a>
+        )}
+        <button type="button" onClick={() => onTailor(card)}>
+          Tailor my CV
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Renders list_matches / search_jobs as job cards and tailor_cv / get_tailored_cv as a status card (spec 08). */
+function ToolCards({ appOrigin }: { appOrigin: string }) {
+  const { agent } = useAgent({ agentId: "default" });
+  const { copilotkit } = useCopilotKit();
+  const tailor = (card: JobCard) => {
+    agent.addMessage({ id: crypto.randomUUID(), role: "user", content: tailorMessage(card) });
+    void copilotkit.runAgent({ agent });
+  };
+  useRenderTool(
+    {
+      name: "*",
+      render: ({ name, status, result }: { name: string; status: string; result?: string }) => {
+        if (status !== "complete") return null;
+        const tool = bareToolName(name);
+        const payload = toolPayload(result);
+        if (tool === "list_matches" || tool === "search_jobs") {
+          const cards = jobCards(payload);
+          return cards.length ? (
+            <div>
+              {cards.map((card) => (
+                <JobCardView key={card.jobKey} card={card} onTailor={tailor} />
+              ))}
+            </div>
+          ) : null;
+        }
+        if (tool === "tailor_cv" || tool === "get_tailored_cv") {
+          const card = tailoredCard(payload, appOrigin);
+          if (!card) return null;
+          return (
+            <div style={cardStyle}>
+              <strong>Tailored CV</strong> · {card.status}
+              {card.error && <div style={{ color: "#991b1b" }}>{card.error}</div>}
+              {card.downloadUrl && (
+                <div style={{ marginTop: 6 }}>
+                  <a href={card.downloadUrl} target="_blank" rel="noopener noreferrer">
+                    Download PDF
+                  </a>
+                </div>
+              )}
+            </div>
+          );
+        }
+        return null;
+      },
+    },
+    [agent, copilotkit, appOrigin],
+  );
+  return null;
+}
+
 function UploadButton({ onUploaded }: { onUploaded: (id: string) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -134,6 +207,7 @@ function App({ appOrigin }: { appOrigin: string }) {
     <CopilotKitProvider runtimeUrl="/api/copilotkit">
       <ChangeNotifier appOrigin={appOrigin} />
       <ResumeContext resumeId={resumeId} />
+      <ToolCards appOrigin={appOrigin} />
       <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
         <AviCVStrip appOrigin={appOrigin} resumeId={resumeId} />
         {!resumeId && <UploadButton onUploaded={uploaded} />}

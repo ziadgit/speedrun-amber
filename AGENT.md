@@ -38,10 +38,11 @@ Live smoke, CV upload: `bun run fake-api`, open `/chat`, click "Upload your CV t
 - `src/server.ts` — `createServer(config, deps?)`, path-prefix dispatch.
 - `src/darwin.ts` — `createDarwinProvider` (`mcpClients` entry, `search` only; union-schema tools break Anthropic). `src/runtime.ts` — `createCopilotHandler(config)`; `src/instructions.ts` — system prompt.
 - `src/mcp/` — `tools.ts` (one fn per tool + TOOLS table), `schemas.ts` (zod), `server.ts` (MCP handler).
-- `src/chat/` — `avicv-proxy.ts` (`/chat/avicv/*` pass-through to AviCV, injected fetch), `resume.ts` (résumé id from `?resume=`/localStorage, PDF upload via `/chat/avicv/resumes`; pure, tested), `index.html`, `main.tsx`, `messages.ts` (pure, tested), `strip.ts` (header strip formatting/polling, pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
+- `src/chat/` — `avicv-proxy.ts` (`/chat/avicv/*` pass-through to AviCV, injected fetch), `resume.ts` (résumé id from `?resume=`/localStorage, PDF upload via `/chat/avicv/resumes`; pure, tested), `index.html`, `main.tsx`, `messages.ts` (pure, tested), `cards.ts` (tool-result card parsing, pure, tested), `strip.ts` (header strip formatting/polling, pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
 - `scripts/` — `fake-api.ts` (AviCV shapes; spec 08), `darwin-probe.ts`. Live network allowed here only.
 
 ## Gotchas
+- Tool cards: `useRenderTool({name:"*", render})` in `ToolCards` (`main.tsx`) dispatches on `bareToolName`; the result is `JSON.stringify(CallToolResult)` (`toolPayload`). "Tailor my CV" = `agent.addMessage` + `copilotkit.runAgent({agent})`. Rendering is unverified in a live run.
 - Agent context: `useAgentContext({description, value})` from `@copilotkit/react-core/v2` sends `{avicv_resume_id}` (`ResumeContext` in `main.tsx`). Attachments are off (no `attachments` prop on `CopilotChat`).
 - Library APIs in specs are unverified (written from docs, never run). When the
   installed `.d.ts` disagrees, the `.d.ts` wins: follow it and fix the spec in
