@@ -48,3 +48,19 @@ test("/mcp rejects an unknown client address", async () => {
     unknown.stop(true);
   }
 });
+
+test("/mcp rejects a spoofed Host header before the handler runs", async () => {
+  let called = false;
+  const s = createServer(loadConfig({ PORT: "0" }), {
+    mcp: () => ((called = true), new Response("mcp")),
+  });
+  try {
+    const bad = await fetch(`http://127.0.0.1:${s.port}/mcp`, { headers: { Host: `evil.example:${s.port}` } });
+    expect(bad.status).toBe(403);
+    expect(called).toBe(false);
+    const ok = await fetch(`http://localhost:${s.port}/mcp`);
+    expect(ok.status).toBe(200);
+  } finally {
+    s.stop(true);
+  }
+});

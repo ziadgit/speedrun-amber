@@ -28,6 +28,11 @@ export function createServer(config: Config, deps: ServerDeps = {}) {
       if (under("/mcp") && deps.mcp) {
         const ip = deps.clientIp ? deps.clientIp(req) : server.requestIP(req)?.address;
         if (!ip || !LOOPBACK.has(ip)) return json({ error: "forbidden" }, 403);
+        const host = req.headers.get("host");
+        const port = server.port;
+        if (!host || ![`127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`].includes(host)) {
+          return json({ error: "forbidden" }, 403);
+        }
         return deps.mcp(req);
       }
       if (under("/chat") && deps.chat) return deps.chat(req);
