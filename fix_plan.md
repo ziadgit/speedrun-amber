@@ -47,6 +47,6 @@ page tells its parent frame what changed.
 
 ### CV upload 2026-10-11 — 🧠 xhigh
 - [x] P0 `save_profile` tool (`PUT /profile`), `get_profile` 404 → "no profile yet" error, fake API `PUT /profile` + empty-profile option, tests incl. the empty → save → get round trip (spec 07, spec 02, spec 05)
-- [ ] P0 Instructions: the three CV-upload lines verbatim + test (spec 07 Instructions)
+- [x] P0 Instructions: the three CV-upload lines verbatim + test (spec 07 Instructions)
 - [ ] P0 Chat attachments: `src/chat/attachments.ts` config (PDF/TXT/MD, 5 MB, inline error), passed to `CopilotChat`; `resourceForTool("save_profile")` → `"profile"`; tests; Live smoke step in `AGENT.md` (spec 07 Chat page)
 - [ ] P2 DOCX: convert in the browser with `mammoth` in `onUpload`, fixture test (spec 07 P2)
