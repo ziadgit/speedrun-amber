@@ -1,7 +1,10 @@
 import type { z } from "zod";
 import {
   Job,
+  LogTimeSavedInput as LogTimeSavedSchema,
   Profile,
+  SaveJobInput as SaveJobSchema,
+  SaveVariantInput as SaveVariantSchema,
   SaveJobInput,
   SaveVariantInput,
   TimeSaved,
@@ -119,3 +122,41 @@ export function logTimeSaved(deps: ClockDeps, input: LogTimeSavedInput): Promise
     baseline_seconds: BASELINE_SECONDS[input.task],
   });
 }
+
+export interface ToolDef {
+  name: string;
+  description: string;
+  /** zod object shape handed to the MCP SDK; empty for tools without input. */
+  inputShape: z.ZodRawShape;
+  run: (deps: ClockDeps, input: any) => Promise<ToolResult>;
+}
+
+export const TOOLS: ToolDef[] = [
+  {
+    name: "get_profile",
+    description:
+      "Read the user's master CV profile: roles, projects and their bullets. Call this before writing any CV variant.",
+    inputShape: {},
+    run: (deps) => getProfile(deps),
+  },
+  {
+    name: "save_job",
+    description: "Save a job posting the user is interested in. Returns the stored job with its id.",
+    inputShape: SaveJobSchema.shape,
+    run: saveJob,
+  },
+  {
+    name: "save_variant",
+    description:
+      "Save a CV variant tailored to a saved job. Each bullet must cite the source_id of the profile role or project it was rewritten from. Do not invent experience.",
+    inputShape: SaveVariantSchema.shape,
+    run: saveVariant,
+  },
+  {
+    name: "log_time_saved",
+    description:
+      "Record that you finished a task for the user, so the app can show time saved. Call once after each finished task.",
+    inputShape: LogTimeSavedSchema.shape,
+    run: logTimeSaved,
+  },
+];

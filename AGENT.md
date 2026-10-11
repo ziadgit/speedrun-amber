@@ -46,6 +46,6 @@ fake-api log. The loop does not run this; it needs a human and a paid key.
   the same loop.
 - MCP SDK under Bun: prefer a web-standard (Request/Response) Streamable HTTP
   transport if the installed SDK has one; the Node `req/res` transport needs an
-  adapter. Record what you used here.
+  adapter. Used: `WebStandardStreamableHTTPServerTransport` (stateless, `enableJsonResponse`, new McpServer per request) in `src/mcp/server.ts`; tool table `TOOLS` lives in `tools.ts`.
 - Tests bind servers to port 0 and read the real port back from `server.port`.
   Always `server.stop(true)` in `afterAll`.
