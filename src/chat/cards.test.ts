@@ -43,8 +43,9 @@ describe("jobCards", () => {
       { jobKey: "k2", title: "Bad", company: "Evil", location: null, scorePct: 100, salary: null, url: null },
     ]);
   });
-  test("maps search_jobs jobs and tolerates junk", () => {
-    expect(jobCards({ jobs: [{ id: "j", title: "T", company: "C" }] })[0]!.jobKey).toBe("j");
+  test("jobCards ignores search_jobs rows", () => {
+    expect(jobCards({ jobs: [{ id: "greenhouse:acme:123", title: "Backend Engineer", company: "Acme" }] })).toEqual([]);
+    expect(jobCards({ items: [{ id: "greenhouse:acme:123", title: "Backend Engineer", company: "Acme" }] })).toEqual([]);
     expect(jobCards(null)).toEqual([]);
     expect(jobCards({ items: "x" })).toEqual([]);
   });

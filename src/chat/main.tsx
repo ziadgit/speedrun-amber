@@ -111,7 +111,7 @@ function JobCardView({ card, onTailor }: { card: JobCard; onTailor: (card: JobCa
   );
 }
 
-/** Renders list_matches / search_jobs as job cards and tailor_cv / get_tailored_cv as a status card (spec 08). */
+/** Renders list_matches as job cards and tailor_cv / get_tailored_cv as a status card (spec 08). */
 function ToolCards({ appOrigin }: { appOrigin: string }) {
   const { agent } = useAgent({ agentId: "default" });
   const { copilotkit } = useCopilotKit();
@@ -126,7 +126,7 @@ function ToolCards({ appOrigin }: { appOrigin: string }) {
         if (status !== "complete") return null;
         const tool = bareToolName(name);
         const payload = toolPayload(result);
-        if (tool === "list_matches" || tool === "search_jobs") {
+        if (tool === "list_matches") {
           const cards = jobCards(payload);
           return cards.length ? (
             <div>

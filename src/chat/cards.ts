@@ -73,15 +73,15 @@ function salaryLabel(min: number | null, max: number | null, currency: string | 
   return [currency, range, interval ? `/ ${interval}` : null].filter(Boolean).join(" ");
 }
 
-/** Job cards out of a `list_matches` (`items`) or `search_jobs` (`jobs`) payload. */
+/** Job cards out of a `list_matches` (`items`) payload; `search_jobs` ids are not match job_keys, so it gets none. */
 export function jobCards(payload: unknown): JobCard[] {
   if (!payload || typeof payload !== "object") return [];
-  const p = payload as { items?: unknown; jobs?: unknown };
-  const rows = Array.isArray(p.items) ? p.items : Array.isArray(p.jobs) ? p.jobs : [];
+  const { items } = payload as { items?: unknown };
+  const rows = Array.isArray(items) ? items : [];
   const cards: JobCard[] = [];
   for (const row of rows as Record<string, unknown>[]) {
     if (!row || typeof row !== "object") continue;
-    const jobKey = str(row.job_key) ?? str(row.id);
+    const jobKey = str(row.job_key);
     const title = str(row.title);
     const company = str(row.company);
     if (!jobKey || !title || !company) continue;
