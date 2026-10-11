@@ -39,9 +39,16 @@ The model cannot measure time, so the tool input is only `task`, and the tool
 fills the REST body:
 - `TaskName` is `"find_jobs" | "tailor_cv"`, with fixed baselines in `tools.ts`:
   `find_jobs` 1200 s, `tailor_cv` 1800 s.
-- `seconds_taken` = whole seconds since the first cv-tools call in the same MCP
-  session (or since server start if sessions are stateless), min 1, via the
+- `seconds_taken` = whole seconds since the **task start**, min 1, via the
   injected clock. Same REST contract as the overview.
+- **Task start** is the first cv-tools call (any tool) after server start or
+  after the previous `log_time_saved`. Each `log_time_saved` call, success or
+  failure, clears it, so the next call starts a new task. It must never be a
+  server-lifetime timestamp: a server up for 40 minutes would report
+  `seconds_taken` past the baseline and save 0. The handler is stateless, so
+  this one value lives in the `createMcpHandler` closure (single-user demo).
+- Test: first call at t=0, `log_time_saved` at t=60 s → 60; idle until t=3600 s,
+  then a call at 3600 s and `log_time_saved` at 3630 s → 30.
 
 ## Results and errors
 - Success: MCP result with one `text` content holding the JSON output and, if

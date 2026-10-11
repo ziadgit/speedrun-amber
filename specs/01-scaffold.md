@@ -53,7 +53,8 @@ in `AGENT.md`. Install latest; pin nothing by hand.
 
 `.env.example` lists all five plus the provider key the chosen `MODEL` needs
 (e.g. `ANTHROPIC_API_KEY=`), with `MODEL=anthropic:claude-sonnet-5-5` as the
-example value. Bun loads `.env` itself; no dotenv package. `.env` is gitignored.
+example value, plus `COPILOTKIT_TELEMETRY_DISABLED=true`. The missing-`MODEL`
+error's example uses the same `anthropic:` form. Bun loads `.env` itself; no dotenv package. `.env` is gitignored.
 
 ## Server (`src/server.ts`)
 `Bun.serve` with `port: config.port` and a `fetch` that dispatches by path
@@ -61,6 +62,16 @@ prefix to independent handlers: `/api/copilotkit*` → copilot, `/mcp` → cv-to
 `/chat*` → chat page (spec 04), `GET /health` → `{"status":"ok"}`, else 404.
 `createServer` accepts injected handlers so tests can mount a subset (e.g. no
 copilot handler when `MODEL` is unset). Run directly, it logs the three URLs.
+
+**`/mcp` is loopback-only.** `/chat` must be public (the app iframes it), but
+only the agent, in this same process, calls `/mcp`. The server's `fetch(req, server)`
+rejects any `/mcp*` request whose `server.requestIP(req)?.address` is not
+`127.0.0.1`, `::1` or `::ffff:127.0.0.1` (or is unknown) with 403
+`{"error":"forbidden"}`, before the cv-tools handler runs. `ServerDeps` takes an
+optional `clientIp(req) => string | undefined` so tests can simulate a remote
+address. Tests: a remote IP gets 403 and the MCP handler is not called; the real
+loopback client in the existing MCP tests still works.
+`/api/copilotkit` stays public for the chat page. Protecting it is out of scope.
 
 ## Acceptance
 - `loadConfig({})` returns the defaults; bad `APP_ORIGIN`/`PORT` throw.
