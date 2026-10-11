@@ -9,7 +9,7 @@ import { AGENT_INSTRUCTIONS } from "./instructions";
 
 /** `port` is the port the server really bound (matters when PORT=0). */
 export function createCopilotHandler(config: Config, port: number = config.port) {
-  if (!config.model) throw new Error("MODEL is required to start the agent (e.g. MODEL=openai/gpt-4o-mini)");
+  if (!config.model) throw new Error("MODEL is required to start the agent (e.g. MODEL=anthropic:claude-sonnet-5-5)");
   // One instance runs one run at a time; fine for a single-user demo.
   const agent = new BuiltInAgent({
     model: config.model,
