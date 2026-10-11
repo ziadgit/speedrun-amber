@@ -1,6 +1,6 @@
-# AGENT.md — how to work in amber (speedhack-agent)
+# AGENT.md — how to work in amber (avicv-agent)
 
-amber is the agent side of the speedhack CV app: CopilotKit runtime + cv-tools
+amber is the agent side of AviCV (`sinaatalay/avicv`): CopilotKit runtime + cv-tools
 MCP server + React chat page, one Bun process on :4000. Read `IDEA.md` (north
 star, seven invariants) and `specs/00-overview.md` first.
 
@@ -11,8 +11,8 @@ append duplicates. It is read on every loop, so length costs every loop.
 - Bun 1.3+ (dev machine: Bun 1.3.11, Node 25) · TypeScript strict · React ·
   `@copilotkit/runtime/v2` · `@copilotkit/react-core/v2` ·
   `@modelcontextprotocol/sdk` · zod. Tests: `bun test`.
-- The main app lives in another repo (`sinaatalay/speedhack`). Never edit it;
-  contract changes go into `specs/02-cv-tools.md` + `HANDOFF.md`.
+- The main app (AviCV) lives in another repo. Never edit it; contract changes
+  go into `specs/08-avicv.md` + `HANDOFF.md`.
 
 ## Commands (spec 01 defines them; these are the contract)
 - `bun install` — deps
@@ -27,8 +27,8 @@ Verify order (one subagent): typecheck → test → build.
 
 ## Live smoke (manual, needs a model key in `.env`)
 `bun run fake-api` and `bun run dev` in two shells, open
-`http://localhost:$PORT/chat`, ask "tailor my CV for a backend role at Acme".
-Expect `get_profile`, `save_job`, `save_variant`, `log_time_saved` in the
+`http://localhost:$PORT/chat?resume=00000000000000000000000000000001`, ask "show my best matches and tailor my CV for the top one".
+Expect `GET /resumes/...`, `GET .../match-results`, `POST .../tailor` in the
 fake-api log. The loop does not run this; it needs a human and a paid key.
 
 Live smoke, CV upload: `bun run fake-api`, open `/chat`, click "Upload your CV to AviCV", expect `POST /resumes` in the fake-api log and `?resume=<id>` in the URL.

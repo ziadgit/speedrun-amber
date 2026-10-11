@@ -1,41 +1,39 @@
-# HANDOFF — what the main repo (`sinaatalay/speedhack`) needs
+# HANDOFF — wiring the agent into AviCV
 
-The Ralph loop in this repo never touches the main repo. A person (or a
-separate session in that repo) makes these three changes. The REST contract is
-`specs/02-cv-tools.md`; until the real routes exist, `bun run fake-api` stands
-in for them.
+The Ralph loop in this repo never touches AviCV (`sinaatalay/avicv`). A person
+(or a separate session in that repo) makes the two changes below. **AviCV's
+backend needs no new routes**: the agent drives the routes it already has
+(`/resumes`, `/resumes/{id}/match-results`, `/resumes/{id}/tailor`,
+`/resumes/{id}/time-savings`, `/jobs`, `/jobs/stats`). The contract is
+`specs/08-avicv.md`; until AviCV runs locally, `bun run fake-api` stands in.
 
-## 1. Five FastAPI routes in `backend/src/backend/main.py`
-Plain in-memory storage, no model calls. One test each in `backend/tests/test_main.py`.
+## 1. `AGENT_URL` in `frontend/src/env.ts`
+Declare it next to `API_URL`, default `http://localhost:4000` (use the agent's
+`PORT`; on a Mac where 4000 is NoMachine, that is 4001):
 
-| Route | Body | Returns |
-| --- | --- | --- |
-| `GET /profile` | none | `Profile` |
-| `POST /jobs` | `{title, company, description, url?}` | `Job` (with `id`, `created_at`) |
-| `POST /cv/variants` | `{job_id, bullets: [{source_id, text}]}` | `Variant`; 404 if `job_id` unknown |
-| `PUT /profile` | a full `Profile` | the stored `Profile`; replaces the old one. `GET /profile` returns 404 until one exists (spec 07) |
-| `POST /time-saved` | `{task, seconds_taken, baseline_seconds}` | `{total_seconds_saved, entries}` |
+```ts
+AGENT_URL: {
+	description: 'Base URL of the AviCV agent server, as reached from the browser',
+	schema: (value) => value || 'http://localhost:4000'
+}
+```
 
-Full shapes are in `specs/02-cv-tools.md`. The SvelteKit page will also want
-`GET /jobs`, `GET /cv/variants` and `GET /time-saved` to list what was saved;
-those are the main repo's call and the agent does not use them.
-
-## 2. `AGENT_URL` in `frontend/src/env.ts`
-Default `http://localhost:4000`, declared next to `API_URL`.
-
-## 3. A chat page on its own route (not `/`, which is prerendered)
-- An iframe of `AGENT_URL/chat`.
+## 2. Embed the chat on `routes/resumes/[id]/+page.svelte`
+- An iframe of `${AGENT_URL}/chat?resume=${id}`. The page already holds the
+  résumé id; the agent uses it as `avicv_resume_id`.
 - A `message` listener that ignores anything whose `event.origin` is not the
-  origin of `AGENT_URL`, then for `{type: "speedhack:changed", resource}` calls
-  `.refresh()` on the matching query (`profile`, `jobs`, `variants`, `time-saved`).
-- The agent server only allows framing from `APP_ORIGIN` (default
-  `http://localhost:5173`), so set that on the agent side if the app runs elsewhere.
+  origin of `AGENT_URL`. For `{type: "avicv:changed", resource}`:
+  - `"resume"` (after `rematch`): refresh `watchResume`.
+  - `"tailored"` (after `tailor_cv` / `get_tailored_cv`): refresh `watchResume`
+    and the time-savings data the page loads for `TimeSavings.svelte`.
+- The agent only allows framing from `APP_ORIGIN` (default
+  `http://localhost:5173`), so set that on the agent side if AviCV runs elsewhere.
 
-## Decisions for the main repo's owner
-- This breaks the README's "the browser only ever talks to SvelteKit" rule: the
-  browser also loads the agent server, which must be public when deployed.
-  FastAPI stays private.
-- The master profile comes from a CV the user attaches in the chat (spec 07). The
-  agent saves it with `PUT /profile` after the user confirms a summary.
-- `save_job` stores whatever `url` the agent passes, including `javascript:`.
-  Check the scheme is `http`/`https` before rendering a job URL as a link.
+## Decisions for AviCV's owner
+- This breaks "the browser only ever talks to SvelteKit": the browser also loads
+  the agent server, which must be public when deployed. FastAPI stays private.
+- A résumé id is a bearer capability. It appears in the iframe URL and in the
+  agent's `/chat/avicv/*` proxy paths, and the agent keeps it in `localStorage`
+  on the standalone page.
+- Tailored-CV download links are `${APP_ORIGIN}/resumes/{id}/tailored/{aid}/cv.pdf`,
+  served by AviCV's frontend. The agent never links to `API_URL`.
