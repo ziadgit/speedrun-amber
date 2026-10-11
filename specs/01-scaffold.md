@@ -49,7 +49,7 @@ in `AGENT.md`. Install latest; pin nothing by hand.
 | `MODEL` | none | required only when the copilot handler is built; `loadConfig` leaves it `undefined` and `createCopilotHandler` throws a clear error naming `MODEL` |
 | `DARWIN_MCP_URL` | `https://mcp.darwin.so/mcp` | |
 | `APP_ORIGIN` | `http://localhost:5173` | must parse as a URL origin; reject a path or `*` |
-| `PORT` | `4000` | integer 0–65535 (0 allowed for tests) |
+| `PORT` | `4000` | integer 0–65535 (0 allowed for tests); empty counts as unset, like the others |
 
 `.env.example` lists all five plus the provider key the chosen `MODEL` needs
 (e.g. `ANTHROPIC_API_KEY=`), with `MODEL=anthropic:claude-sonnet-5-5` as the
@@ -72,6 +72,14 @@ optional `clientIp(req) => string | undefined` so tests can simulate a remote
 address. Tests: a remote IP gets 403 and the MCP handler is not called; the real
 loopback client in the existing MCP tests still works.
 `/api/copilotkit` stays public for the chat page. Protecting it is out of scope.
+
+**`/mcp` also checks the Host header** (blocks DNS rebinding: a web page in the
+user's browser whose domain resolves to 127.0.0.1 would pass the IP check). After
+the IP check, reject with the same 403 unless `Host` is exactly `127.0.0.1:<port>`,
+`localhost:<port>` or `[::1]:<port>`, where `<port>` is the bound `server.port`.
+The agent's own MCP URL (`http://127.0.0.1:<port>/mcp`) passes. Tests: a
+loopback request with `Host: evil.example:<port>` gets 403 and the handler is
+not called; the existing MCP client tests still pass.
 
 ## Acceptance
 - `loadConfig({})` returns the defaults; bad `APP_ORIGIN`/`PORT` throw.

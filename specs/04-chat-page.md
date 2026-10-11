@@ -8,6 +8,9 @@ component filling the viewport. Plain, readable styling; no design system.
 - `GET /chat` serves `src/chat/index.html`, bundled by Bun (HTML import in
   `Bun.serve` routes, or a `Bun.build` at startup, whichever lets us set
   headers). Its assets are served under `/chat/`.
+- The bundle is minified (`minify: true` on `Bun.build`; the unminified page was
+  ~24 MB, too slow over a tunnel). Sourcemaps off. `bun run build` uses
+  `--minify` too so it checks the same output.
 - Every `/chat*` response carries
   `Content-Security-Policy: frame-ancestors <APP_ORIGIN>` (invariant 6). Not
   `X-Frame-Options` (it cannot name an origin).
