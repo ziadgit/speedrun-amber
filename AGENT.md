@@ -38,7 +38,7 @@ Live smoke, CV upload: `bun run fake-api`, attach a PDF CV in `/chat`, confirm t
 - `src/server.ts` — `createServer(config, deps?)`, path-prefix dispatch.
 - `src/darwin.ts` — `createDarwinProvider` (`mcpClients` entry, `search` only; union-schema tools break Anthropic). `src/runtime.ts` — `createCopilotHandler(config)`; `src/instructions.ts` — system prompt.
 - `src/mcp/` — `tools.ts` (one fn per tool + TOOLS table), `schemas.ts` (zod), `server.ts` (MCP handler).
-- `src/chat/` — `attachments.ts` (CV upload; DOCX→text via `mammoth/mammoth.browser.js`, typed by `mammoth.d.ts`), `index.html`, `main.tsx`, `messages.ts` (pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
+- `src/chat/` — `avicv-proxy.ts` (`/chat/avicv/*` pass-through to AviCV, injected fetch), `attachments.ts` (CV upload; DOCX→text via `mammoth/mammoth.browser.js`, typed by `mammoth.d.ts`), `index.html`, `main.tsx`, `messages.ts` (pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
 - `scripts/` — `fake-api.ts` (AviCV shapes; spec 08), `darwin-probe.ts`. Live network allowed here only.
 
 ## Gotchas
