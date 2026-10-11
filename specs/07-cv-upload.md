@@ -1,3 +1,4 @@
+> **Retired by spec 08**: chat attachments, mammoth and the MIME code were removed; AviCV parses PDFs itself.
 > **Superseded by `specs/08-avicv.md`** wherever they conflict (AviCV is the backend now).
 
 # 07 · CV upload: the profile comes from the user's CV

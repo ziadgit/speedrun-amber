@@ -108,7 +108,7 @@ src/
   darwin.ts         Darwin MCP, `search` only
   instructions.ts   system prompt
   mcp/              cv-tools: tools.ts, schemas.ts, server.ts
-  chat/             React page, CV attachments (DOCX → text via mammoth)
+  chat/             React page, PDF upload to AviCV, résumé id
 specs/              00–07, the source of truth
 ```
 

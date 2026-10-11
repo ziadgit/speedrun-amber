@@ -55,7 +55,7 @@ page tells its parent frame what changed.
 - [x] P0 In-process round trip against the fake API on port 0: upload → get_resume → list_matches → tailor_cv → get_tailored_cv → get_time_savings (spec 08 Acceptance)
 - [x] P0 `src/instructions.ts`: the AviCV rules verbatim plus Darwin rules, Darwin marked secondary; drop the CV-upload rules; update the verbatim test (spec 08 "Instructions")
 - [x] P0 `/chat/avicv/*` proxy routes (upload, stats, résumé, time-savings) with id validation, allowlist, CSP, no-store; tests (spec 08 "Proxy routes")
-- [ ] P0 Chat page résumé id: `?resume=` param, localStorage fallback, "Upload your CV to AviCV" button, agent context `avicv_resume_id` via the installed v2 hook (record it in `AGENT.md`); remove attachments, `attachments.ts`, mammoth and their tests (spec 08 "Chat page")
+- [x] P0 Chat page résumé id: `?resume=` param, localStorage fallback, "Upload your CV to AviCV" button, agent context `avicv_resume_id` via the installed v2 hook (record it in `AGENT.md`); remove attachments, `attachments.ts`, mammoth and their tests (spec 08 "Chat page")
 - [ ] P1 AviCV header strip: wordmark → `APP_ORIGIN`, catalog size, résumé chip → `page_url` with status/progress, time saved; polling rules; pure formatting helpers tested (spec 08 "AviCV header strip")
 - [ ] P1 Tool-result cards: match cards with score %, Apply link, "Tailor my CV" button; tailored-CV card with Download PDF; use the installed v2 tool-call renderer (spec 08 "Tool results render as cards")
 - [ ] P1 `avicv:changed` rename and new `resourceForTool` mapping; tests (spec 08 "Change notifications")

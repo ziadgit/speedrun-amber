@@ -31,17 +31,18 @@ Verify order (one subagent): typecheck → test → build.
 Expect `get_profile`, `save_job`, `save_variant`, `log_time_saved` in the
 fake-api log. The loop does not run this; it needs a human and a paid key.
 
-Live smoke, CV upload: `bun run fake-api`, attach a PDF CV in `/chat`, confirm the summary, expect `PUT /profile` in the fake-api log, then ask for a tailored CV.
+Live smoke, CV upload: `bun run fake-api`, open `/chat`, click "Upload your CV to AviCV", expect `POST /resumes` in the fake-api log and `?resume=<id>` in the URL.
 
 ## Layout
 - `src/config.ts` — `loadConfig(env)`, the only env reader.
 - `src/server.ts` — `createServer(config, deps?)`, path-prefix dispatch.
 - `src/darwin.ts` — `createDarwinProvider` (`mcpClients` entry, `search` only; union-schema tools break Anthropic). `src/runtime.ts` — `createCopilotHandler(config)`; `src/instructions.ts` — system prompt.
 - `src/mcp/` — `tools.ts` (one fn per tool + TOOLS table), `schemas.ts` (zod), `server.ts` (MCP handler).
-- `src/chat/` — `avicv-proxy.ts` (`/chat/avicv/*` pass-through to AviCV, injected fetch), `attachments.ts` (CV upload; DOCX→text via `mammoth/mammoth.browser.js`, typed by `mammoth.d.ts`), `index.html`, `main.tsx`, `messages.ts` (pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
+- `src/chat/` — `avicv-proxy.ts` (`/chat/avicv/*` pass-through to AviCV, injected fetch), `resume.ts` (résumé id from `?resume=`/localStorage, PDF upload via `/chat/avicv/resumes`; pure, tested), `index.html`, `main.tsx`, `messages.ts` (pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
 - `scripts/` — `fake-api.ts` (AviCV shapes; spec 08), `darwin-probe.ts`. Live network allowed here only.
 
 ## Gotchas
+- Agent context: `useAgentContext({description, value})` from `@copilotkit/react-core/v2` sends `{avicv_resume_id}` (`ResumeContext` in `main.tsx`). Attachments are off (no `attachments` prop on `CopilotChat`).
 - Library APIs in specs are unverified (written from docs, never run). When the
   installed `.d.ts` disagrees, the `.d.ts` wins: follow it and fix the spec in
   the same loop.
