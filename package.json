@@ -10,7 +10,8 @@
     "test": "bun test",
     "build": "bun build src/chat/index.html --outdir dist/chat",
     "fake-api": "bun scripts/fake-api.ts",
-    "darwin-probe": "bun scripts/darwin-probe.ts"
+    "darwin-probe": "bun scripts/darwin-probe.ts",
+    "boards-probe": "bun scripts/boards-probe.ts"
   },
   "dependencies": {
     "@copilotkit/react-core": "^1.78.0",

@@ -34,7 +34,7 @@ page tells its parent frame what changed.
 - [x] P0 Post `speedhack:changed` to `appOrigin` once per successful cv-tools call, using the installed react-core API; record the hook used in `AGENT.md` (spec 04)
 
 ### Job boards fallback — ⚡ high
-- [ ] P1 Boards probe: fetch one live board per provider, correct the URL/shape table in spec 06 (spec 06)
+- [x] P1 Boards probe: fetch one live board per provider, correct the URL/shape table in spec 06 (spec 06)
 - [ ] P1 `search_jobs` tool with fixture-based tests, registered in cv-tools; add the instructions line (spec 06) blocked-by: boards probe
 
 ## Discovered

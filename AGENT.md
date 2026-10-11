@@ -19,6 +19,7 @@ append duplicates. It is read on every loop, so length costs every loop.
 - `bun run dev` — server with hot reload on :4000 (`/chat`, `/mcp`, `/api/copilotkit`, `/health`)
 - `bun run fake-api` — in-memory FastAPI stand-in on :8000
 - `bun run darwin-probe` — one live Darwin search (network; never in tests)
+- `bun run boards-probe` — one live fetch per job board (network; never in tests)
 - `bun run typecheck` — `tsc --noEmit`
 - `bun test` — unit + in-process server tests, no live network
 - `bun run build` — bundles the chat page to `dist/chat`

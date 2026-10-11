@@ -15,10 +15,17 @@ Description: "List open roles from one company's public job board. You must know
 | lever | `https://api.lever.co/v0/postings/{company}?mode=json` |
 | ashby | `https://api.ashbyhq.com/posting-api/job-board/{company}` |
 
-These URLs and shapes are from memory. Before writing the parsers, extend
-`scripts/darwin-probe.ts` (or add `scripts/boards-probe.ts`) to fetch one known
-board per provider and print the top-level keys of one job; correct this table
-from what comes back.
+URLs confirmed live on 2026-10-11 (`bun run boards-probe`, network; stripe,
+palantir, ramp). Response shapes:
+
+| Board | Jobs at | title | location | url | description |
+| --- | --- | --- | --- | --- | --- |
+| greenhouse | `body.jobs[]` (also `meta`) | `title` | `location.name` | `absolute_url` | `content` (HTML, entity-escaped: unescape, then strip tags) |
+| lever | body is the array | `text` | `categories.location` | `hostedUrl` | `descriptionPlain` |
+| ashby | `body.jobs[]` (also `apiVersion`) | `title` (may have stray spaces: trim) | `location` | `jobUrl` | `descriptionPlain` |
+
+Greenhouse also gives `company_name`; for lever and ashby use the `company` input.
+Validate each `url` is `https:` before returning it (invariant 5).
 
 ## Rules
 - `company` must match `^[a-z0-9-]{1,64}$`; anything else is an `isError`
