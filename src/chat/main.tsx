@@ -1,8 +1,8 @@
-import { CopilotChat, CopilotKitProvider, useAgent, useAgentContext, useCopilotKit, useRenderTool } from "@copilotkit/react-core/v2";
+import { CopilotChat, CopilotKitProvider, useAgent, useAgentContext, useConfigureSuggestions, useCopilotKit, useRenderTool } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { bareToolName, jobCards, tailoredCard, tailorMessage, toolPayload, type JobCard } from "./cards";
+import { bareToolName, jobCards, SUGGESTIONS, tailoredCard, tailorMessage, toolPayload, type JobCard } from "./cards";
 import { createChangeTracker } from "./messages";
 import { readResumeId, rememberResumeId, uploadCv } from "./resume";
 import { catalogLabel, isActiveStatus, POLL_MS, resumeChip, resumeView, timeSavedLabel, type ResumeView } from "./strip";
@@ -193,6 +193,12 @@ function UploadButton({ onUploaded }: { onUploaded: (id: string) => void }) {
   );
 }
 
+/** Must render inside `CopilotKitProvider`. */
+function Suggestions() {
+  useConfigureSuggestions({ suggestions: SUGGESTIONS, available: "before-first-message" }, []);
+  return null;
+}
+
 function App({ appOrigin }: { appOrigin: string }) {
   const [resumeId, setResumeId] = useState(() => readResumeId(location.search, localStorageOrUndefined()));
   const uploaded = (id: string) => {
@@ -205,6 +211,7 @@ function App({ appOrigin }: { appOrigin: string }) {
   }, [resumeId]);
   return (
     <CopilotKitProvider runtimeUrl="/api/copilotkit">
+      <Suggestions />
       <ChangeNotifier appOrigin={appOrigin} />
       <ResumeContext resumeId={resumeId} />
       <ToolCards appOrigin={appOrigin} />

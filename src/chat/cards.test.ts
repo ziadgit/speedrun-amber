@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { bareToolName, jobCards, safeDownloadUrl, safeHttpsUrl, tailoredCard, tailorMessage, toolPayload } from "./cards";
+import { bareToolName, jobCards, SUGGESTIONS, safeDownloadUrl, safeHttpsUrl, tailoredCard, tailorMessage, toolPayload } from "./cards";
 
 const wrap = (payload: unknown, isError = false) => JSON.stringify({ content: [{ type: "text", text: JSON.stringify(payload) }], isError });
 
@@ -63,4 +63,16 @@ test("tailorMessage and bareToolName", () => {
   expect(tailorMessage({ title: "Backend", company: "Acme", jobKey: "k1" })).toBe("Tailor my CV for Backend at Acme (job_key k1)");
   expect(bareToolName("cv__list_matches")).toBe("list_matches");
   expect(bareToolName("tailor_cv")).toBe("tailor_cv");
+});
+
+describe("SUGGESTIONS", () => {
+  test("are the four spec 08 prompts and say AviCV, never amber or speedhack", () => {
+    expect(SUGGESTIONS.map((s) => s.title)).toEqual([
+      "Show my best matches",
+      "Tailor my CV for my top match",
+      "Find remote backend roles",
+      "How much time has AviCV saved me?",
+    ]);
+    for (const s of SUGGESTIONS) expect(`${s.title} ${s.message}`).not.toMatch(/amber|speedhack/i);
+  });
 });

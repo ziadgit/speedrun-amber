@@ -114,3 +114,11 @@ export function tailoredCard(payload: unknown, appOrigin: string): TailoredCard 
 export function tailorMessage(card: Pick<JobCard, "title" | "company" | "jobKey">): string {
   return `Tailor my CV for ${card.title} at ${card.company} (job_key ${card.jobKey})`;
 }
+
+/** Empty-state suggestion pills (spec 08 "Empty-state suggestions"). */
+export const SUGGESTIONS: { title: string; message: string }[] = [
+  { title: "Show my best matches", message: "Show my best matches" },
+  { title: "Tailor my CV for my top match", message: "Tailor my CV for my top match" },
+  { title: "Find remote backend roles", message: "Find remote backend roles" },
+  { title: "How much time has AviCV saved me?", message: "How much time has AviCV saved me?" },
+];
