@@ -1,3 +1,5 @@
+> **Superseded by `specs/08-avicv.md`** wherever they conflict (AviCV is the backend now).
+
 # 02 · cv-tools: the contract between the repos
 
 cv-tools is an MCP server (Streamable HTTP, stateless or per-session, whichever

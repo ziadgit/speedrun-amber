@@ -1,3 +1,5 @@
+> **Superseded by `specs/08-avicv.md`** wherever they conflict (AviCV is the backend now).
+
 # 07 · CV upload: the profile comes from the user's CV
 
 Until now the master profile only came from `GET /profile`, and nothing could

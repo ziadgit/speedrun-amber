@@ -48,3 +48,16 @@ page tells its parent frame what changed.
 ### CV upload fixes 2026-10-11 — ⚡ high
 - [x] P0 `onUpload` normalizes MIME types to `application/pdf` or `text/plain` and rejects other files with a clear message; tests for `.md` with empty and `text/markdown` types, `.PDF` with empty type, `.png` (spec 07 "MIME types sent to the model")
 - [x] P2 `AGENT.md`: note that `PORT` may need to differ from 4000 (on the dev Mac 4000 is NoMachine; `.env` uses 4001) and use `localhost:$PORT` in Live smoke (spec 01 Config)
+
+### AviCV integration 2026-10-11 — 🧠 xhigh
+- [ ] P0 Rewrite `scripts/fake-api.ts` + its test to AviCV's routes and shapes: seeded résumé, fixture jobs, upload with status steps, tailoring steps, 404 `detail` for unknown job_key; drop `FAKE_API_EMPTY_PROFILE` (spec 08 "Fake API"; check shapes against `~/ralphapps/avicv/backend/src/backend`)
+- [ ] P0 Replace cv-tools with the eight AviCV tools in `src/mcp/schemas.ts` + `tools.ts` (resume_id check, trimmed outputs, `APP_ORIGIN` download/page URLs, https-only job urls, `detail` in errors); delete the old five tools, board fetch, `boards-probe`, and their tests; MCP test lists exactly eight (spec 08 "cv-tools")
+- [ ] P0 In-process round trip against the fake API on port 0: upload → get_resume → list_matches → tailor_cv → get_tailored_cv → get_time_savings (spec 08 Acceptance)
+- [ ] P0 `src/instructions.ts`: the AviCV rules verbatim plus Darwin rules, Darwin marked secondary; drop the CV-upload rules; update the verbatim test (spec 08 "Instructions")
+- [ ] P0 `/chat/avicv/*` proxy routes (upload, stats, résumé, time-savings) with id validation, allowlist, CSP, no-store; tests (spec 08 "Proxy routes")
+- [ ] P0 Chat page résumé id: `?resume=` param, localStorage fallback, "Upload your CV to AviCV" button, agent context `avicv_resume_id` via the installed v2 hook (record it in `AGENT.md`); remove attachments, `attachments.ts`, mammoth and their tests (spec 08 "Chat page")
+- [ ] P1 AviCV header strip: wordmark → `APP_ORIGIN`, catalog size, résumé chip → `page_url` with status/progress, time saved; polling rules; pure formatting helpers tested (spec 08 "AviCV header strip")
+- [ ] P1 Tool-result cards: match cards with score %, Apply link, "Tailor my CV" button; tailored-CV card with Download PDF; use the installed v2 tool-call renderer (spec 08 "Tool results render as cards")
+- [ ] P1 `avicv:changed` rename and new `resourceForTool` mapping; tests (spec 08 "Change notifications")
+- [ ] P2 Empty-state suggestions and AviCV copy everywhere visible; page title "AviCV agent" (spec 08 Chat page)
+- [ ] P2 Docs: rewrite `HANDOFF.md` for AviCV (`AGENT_URL` in `frontend/src/env.ts`, iframe `${AGENT_URL}/chat?resume=${id}` on `routes/resumes/[id]/+page.svelte`, `avicv:changed` listener refreshing `watchResume`/time savings; no new backend routes needed); update `README.md` tools/config/diagram and `AGENT.md` layout/live smoke; `package.json` name `avicv-agent` (spec 08)

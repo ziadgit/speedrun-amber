@@ -1,3 +1,5 @@
+> **Superseded by `specs/08-avicv.md`** wherever they conflict (AviCV is the backend now).
+
 # 06 · `search_jobs` (conditional fallback)
 
 Built only if the Darwin probe (spec 05) finds no startable job-postings agent.
