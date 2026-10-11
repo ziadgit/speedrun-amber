@@ -50,7 +50,7 @@ page tells its parent frame what changed.
 - [x] P2 `AGENT.md`: note that `PORT` may need to differ from 4000 (on the dev Mac 4000 is NoMachine; `.env` uses 4001) and use `localhost:$PORT` in Live smoke (spec 01 Config)
 
 ### AviCV integration 2026-10-11 — 🧠 xhigh
-- [ ] P0 Rewrite `scripts/fake-api.ts` + its test to AviCV's routes and shapes: seeded résumé, fixture jobs, upload with status steps, tailoring steps, 404 `detail` for unknown job_key; drop `FAKE_API_EMPTY_PROFILE` (spec 08 "Fake API"; check shapes against `~/ralphapps/avicv/backend/src/backend`)
+- [x] P0 Rewrite `scripts/fake-api.ts` + its test to AviCV's routes and shapes: seeded résumé, fixture jobs, upload with status steps, tailoring steps, 404 `detail` for unknown job_key; drop `FAKE_API_EMPTY_PROFILE` (spec 08 "Fake API"; check shapes against `~/ralphapps/avicv/backend/src/backend`)
 - [ ] P0 Replace cv-tools with the eight AviCV tools in `src/mcp/schemas.ts` + `tools.ts` (resume_id check, trimmed outputs, `APP_ORIGIN` download/page URLs, https-only job urls, `detail` in errors); delete the old five tools, board fetch, `boards-probe`, and their tests; MCP test lists exactly eight (spec 08 "cv-tools")
 - [ ] P0 In-process round trip against the fake API on port 0: upload → get_resume → list_matches → tailor_cv → get_tailored_cv → get_time_savings (spec 08 Acceptance)
 - [ ] P0 `src/instructions.ts`: the AviCV rules verbatim plus Darwin rules, Darwin marked secondary; drop the CV-upload rules; update the verbatim test (spec 08 "Instructions")
