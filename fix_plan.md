@@ -51,7 +51,7 @@ page tells its parent frame what changed.
 
 ### AviCV integration 2026-10-11 — 🧠 xhigh
 - [x] P0 Rewrite `scripts/fake-api.ts` + its test to AviCV's routes and shapes: seeded résumé, fixture jobs, upload with status steps, tailoring steps, 404 `detail` for unknown job_key; drop `FAKE_API_EMPTY_PROFILE` (spec 08 "Fake API"; check shapes against `~/ralphapps/avicv/backend/src/backend`)
-- [ ] P0 Replace cv-tools with the eight AviCV tools in `src/mcp/schemas.ts` + `tools.ts` (resume_id check, trimmed outputs, `APP_ORIGIN` download/page URLs, https-only job urls, `detail` in errors); delete the old five tools, board fetch, `boards-probe`, and their tests; MCP test lists exactly eight (spec 08 "cv-tools")
+- [x] P0 Replace cv-tools with the eight AviCV tools in `src/mcp/schemas.ts` + `tools.ts` (resume_id check, trimmed outputs, `APP_ORIGIN` download/page URLs, https-only job urls, `detail` in errors); delete the old five tools, board fetch, `boards-probe`, and their tests; MCP test lists exactly eight (spec 08 "cv-tools")
 - [ ] P0 In-process round trip against the fake API on port 0: upload → get_resume → list_matches → tailor_cv → get_tailored_cv → get_time_savings (spec 08 Acceptance)
 - [ ] P0 `src/instructions.ts`: the AviCV rules verbatim plus Darwin rules, Darwin marked secondary; drop the CV-upload rules; update the verbatim test (spec 08 "Instructions")
 - [ ] P0 `/chat/avicv/*` proxy routes (upload, stats, résumé, time-savings) with id validation, allowlist, CSP, no-store; tests (spec 08 "Proxy routes")

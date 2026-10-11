@@ -10,8 +10,7 @@
     "test": "bun test",
     "build": "bun build src/chat/index.html --outdir dist/chat --minify",
     "fake-api": "bun scripts/fake-api.ts",
-    "darwin-probe": "bun scripts/darwin-probe.ts",
-    "boards-probe": "bun scripts/boards-probe.ts"
+    "darwin-probe": "bun scripts/darwin-probe.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.49",

@@ -19,7 +19,6 @@ append duplicates. It is read on every loop, so length costs every loop.
 - `bun run dev` — server with hot reload on `PORT` (default 4000; the dev Mac's :4000 is NoMachine, so `.env` sets `PORT=4001`) (`/chat`, `/mcp`, `/api/copilotkit`, `/health`)
 - `bun run fake-api` — in-memory AviCV FastAPI stand-in on :8000 (seeded résumé `00000000000000000000000000000001`)
 - `bun run darwin-probe` — one live Darwin search (network; never in tests)
-- `bun run boards-probe` — one live fetch per job board (network; never in tests)
 - `bun run typecheck` — `tsc --noEmit`
 - `bun test` — unit + in-process server tests, no live network
 - `bun run build` — bundles the chat page (minified, ~17.6 MB js + 1.5 MB css) to `dist/chat`

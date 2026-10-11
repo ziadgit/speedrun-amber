@@ -1,25 +1,25 @@
 import type { z } from "zod";
 import {
-  Job,
-  LogTimeSavedInput as LogTimeSavedSchema,
-  Profile,
-  ProfileInput as ProfileInputSchema,
-  type ProfileInput,
-  SaveJobInput as SaveJobSchema,
-  SaveVariantInput as SaveVariantSchema,
-  SaveJobInput,
-  SaveVariantInput,
+  GetTailoredCvInput as GetTailoredCvSchema,
+  ListMatchesInput as ListMatchesSchema,
+  RESUME_ID_RE,
+  RematchInput as RematchSchema,
+  ResumeInput as ResumeSchema,
   SearchJobsInput as SearchJobsSchema,
+  TailorCvInput as TailorCvSchema,
+  type GetTailoredCvInput,
+  type ListMatchesInput,
+  type RematchInput,
+  type ResumeInput,
   type SearchJobsInput,
-  TimeSaved,
-  Variant,
-  type LogTimeSavedInput,
-  type TaskName,
+  type TailorCvInput,
 } from "./schemas";
 
 export interface ToolDeps {
   fetch: typeof fetch;
   apiUrl: string;
+  /** AviCV's frontend origin: the only host the agent links to (spec 08). */
+  appOrigin: string;
 }
 
 export interface ToolResult {
@@ -29,23 +29,14 @@ export interface ToolResult {
   isError?: boolean;
 }
 
-export const BASELINE_SECONDS: Record<TaskName, number> = {
-  find_jobs: 1200,
-  tailor_cv: 1800,
-};
-
-/** Deps for tools that measure time: `now` is epoch ms, `startedAt` the session's first call. */
-export interface ClockDeps extends ToolDeps {
-  now: () => number;
-  startedAt: number;
-}
-
 const TIMEOUT_MS = 10_000;
+
+type Obj = Record<string, unknown>;
 
 function ok(data: object): ToolResult {
   return {
     content: [{ type: "text", text: JSON.stringify(data) }],
-    structuredContent: data as Record<string, unknown>,
+    structuredContent: data as Obj,
   };
 }
 
@@ -53,15 +44,45 @@ function fail(tool: string, detail: string): ToolResult {
   return { content: [{ type: "text", text: `${tool} failed: ${detail}` }], isError: true };
 }
 
-/** One HTTP call to the app API; never throws. */
-async function callApi<T>(
+const rec = (v: unknown): Obj => {
+  if (!v || typeof v !== "object" || Array.isArray(v)) throw new Error("expected an object");
+  return v as Obj;
+};
+const pick = (o: Obj, keys: string[]): Obj => Object.fromEntries(keys.map((k) => [k, o[k] ?? null]));
+
+/** Only https URLs reach the model; anything else becomes null. */
+function httpsUrl(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  try {
+    return new URL(v).protocol === "https:" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/** FastAPI errors carry `detail`: a string, or a validation list we reduce to its messages. */
+function errorDetail(text: string): string {
+  try {
+    const detail = (JSON.parse(text) as Obj).detail;
+    if (typeof detail === "string") return detail.slice(0, 300);
+    if (Array.isArray(detail)) {
+      const msgs = detail.map((d) => (d && typeof d === "object" ? String((d as Obj).msg ?? "") : "")).filter(Boolean);
+      if (msgs.length) return msgs.join("; ").slice(0, 300);
+    }
+  } catch {
+    // not JSON; fall through to the raw text
+  }
+  return text.slice(0, 300);
+}
+
+/** One HTTP call to AviCV's API; never throws. `shape` trims the JSON and may throw on a bad shape. */
+async function callApi(
   tool: string,
   deps: ToolDeps,
-  method: "GET" | "POST" | "PUT",
+  method: "GET" | "POST",
   path: string,
-  schema: z.ZodType<T>,
+  shape: (json: unknown) => object,
   body?: unknown,
-  notFound?: string,
 ): Promise<ToolResult> {
   let res: Response;
   try {
@@ -75,187 +96,133 @@ async function callApi<T>(
     return fail(tool, err instanceof Error ? err.message : String(err));
   }
   const text = await res.text().catch(() => "");
-  if (!res.ok) {
-    if (res.status === 404 && notFound) return fail(tool, notFound);
-    return fail(tool, `${res.status} ${text.slice(0, 300)}`);
-  }
+  if (!res.ok) return fail(tool, `${res.status} ${errorDetail(text)}`);
   let json: unknown;
   try {
     json = JSON.parse(text);
   } catch {
     return fail(tool, `invalid JSON response ${text.slice(0, 300)}`);
   }
-  const parsed = schema.safeParse(json);
-  if (!parsed.success) {
-    return fail(tool, `unexpected response shape ${parsed.error.message.slice(0, 300)}`);
-  }
-  return ok(parsed.data as object);
-}
-
-export function getProfile(deps: ToolDeps): Promise<ToolResult> {
-  return callApi(
-    "get_profile",
-    deps,
-    "GET",
-    "/profile",
-    Profile,
-    undefined,
-    "no profile yet; ask the user to upload their CV",
-  );
-}
-
-export function saveProfile(deps: ToolDeps, input: ProfileInput): Promise<ToolResult> {
-  return callApi("save_profile", deps, "PUT", "/profile", Profile, input);
-}
-
-export function saveVariant(deps: ToolDeps, input: SaveVariantInput): Promise<ToolResult> {
-  return callApi(
-    "save_variant",
-    deps,
-    "POST",
-    "/cv/variants",
-    Variant,
-    { job_id: input.job_id, bullets: input.bullets },
-    `job ${input.job_id} not found`,
-  );
-}
-
-export function saveJob(deps: ToolDeps, input: SaveJobInput): Promise<ToolResult> {
-  const body: Record<string, unknown> = {
-    title: input.title,
-    company: input.company,
-    description: input.description,
-  };
-  if (input.url !== undefined) body.url = input.url;
-  return callApi("save_job", deps, "POST", "/jobs", Job, body);
-}
-
-export function logTimeSaved(deps: ClockDeps, input: LogTimeSavedInput): Promise<ToolResult> {
-  const secondsTaken = Math.max(1, Math.round((deps.now() - deps.startedAt) / 1000));
-  return callApi("log_time_saved", deps, "POST", "/time-saved", TimeSaved, {
-    task: input.task,
-    seconds_taken: secondsTaken,
-    baseline_seconds: BASELINE_SECONDS[input.task],
-  });
-}
-
-const BOARD_URLS: Record<SearchJobsInput["board"], (company: string) => string> = {
-  greenhouse: (c) => `https://boards-api.greenhouse.io/v1/boards/${c}/jobs?content=true`,
-  lever: (c) => `https://api.lever.co/v0/postings/${c}?mode=json`,
-  ashby: (c) => `https://api.ashbyhq.com/posting-api/job-board/${c}`,
-};
-
-const COMPANY_RE = /^[a-z0-9-]{1,64}$/;
-const DESCRIPTION_MAX = 1500;
-
-const NAMED_ENTITIES: Record<string, string> = {
-  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", mdash: "\u2014", ndash: "\u2013",
-};
-
-// One pass, so `&amp;lt;` becomes `&lt;` and not `<`.
-function decodeEntities(s: string): string {
-  return s.replace(/&(?:#(\d{1,7})|#[xX]([0-9a-fA-F]{1,6})|([a-z]+));/g, (m, dec, hex, name) => {
-    if (name) return NAMED_ENTITIES[name] ?? m;
-    const cp = dec ? Number(dec) : parseInt(hex, 16);
-    return cp > 0 && cp <= 0x10ffff && (cp < 0xd800 || cp > 0xdfff) ? String.fromCodePoint(cp) : m;
-  });
-}
-
-function stripHtml(s: string): string {
-  return s.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
-
-interface BoardJob {
-  title: string;
-  location: string | null;
-  url: string;
-  description: string;
-  company?: string;
-}
-
-const str = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
-const rec = (v: unknown): Record<string, unknown> =>
-  v && typeof v === "object" ? (v as Record<string, unknown>) : {};
-
-function parseBoard(board: SearchJobsInput["board"], body: unknown): BoardJob[] {
-  const list = Array.isArray(body) ? body : rec(body).jobs;
-  if (!Array.isArray(list)) throw new Error("no job list");
-  const out: BoardJob[] = [];
-  for (const raw of list) {
-    const j = rec(raw);
-    let title: string | undefined;
-    let url: string | undefined;
-    let location: string | undefined;
-    let description: string;
-    let company: string | undefined;
-    if (board === "greenhouse") {
-      title = str(j.title);
-      url = str(j.absolute_url);
-      location = str(rec(j.location).name);
-      description = decodeEntities(stripHtml(decodeEntities(str(j.content) ?? "")));
-      company = str(j.company_name);
-    } else if (board === "lever") {
-      title = str(j.text);
-      url = str(j.hostedUrl);
-      location = str(rec(j.categories).location);
-      description = stripHtml(str(j.descriptionPlain) ?? "");
-    } else {
-      title = str(j.title);
-      url = str(j.jobUrl);
-      location = str(j.location);
-      description = stripHtml(str(j.descriptionPlain) ?? "");
-    }
-    if (title === undefined || url === undefined) continue;
-    try {
-      if (new URL(url).protocol !== "https:") continue;
-    } catch {
-      continue;
-    }
-    out.push({
-      title: title.trim(),
-      location: location?.trim() || null,
-      url,
-      description: description.slice(0, DESCRIPTION_MAX),
-      company,
-    });
-  }
-  return out;
-}
-
-/** The one tool that does not call the app API: one GET to a public job board. */
-export async function searchJobs(deps: Pick<ToolDeps, "fetch">, input: SearchJobsInput): Promise<ToolResult> {
-  if (!COMPANY_RE.test(input.company)) {
-    return fail("search_jobs", "company must match ^[a-z0-9-]{1,64}$");
-  }
-  const parsed = SearchJobsSchema.safeParse(input);
-  if (!parsed.success) return fail("search_jobs", parsed.error.message.slice(0, 300));
-  const { board, company, query, limit } = parsed.data;
-  let res: Response;
   try {
-    res = await deps.fetch(BOARD_URLS[board](company), { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    return ok(shape(json));
   } catch (err) {
-    return fail("search_jobs", err instanceof Error ? err.message : String(err));
+    return fail(tool, `unexpected response shape ${err instanceof Error ? err.message : ""}`.trim());
   }
-  const text = await res.text().catch(() => "");
-  if (res.status === 404) return fail("search_jobs", `no ${board} board named ${company}`);
-  if (!res.ok) return fail("search_jobs", `${res.status} ${text.slice(0, 300)}`);
-  let jobs: BoardJob[];
-  try {
-    jobs = parseBoard(board, JSON.parse(text));
-  } catch {
-    return fail("search_jobs", `unexpected response shape ${text.slice(0, 300)}`);
-  }
-  const q = query?.toLowerCase();
-  const matched = (q ? jobs.filter((j) => j.title.toLowerCase().includes(q)) : jobs)
-    .slice(0, limit)
-    .map((j) => ({
-      title: j.title,
-      company: j.company ?? company,
-      location: j.location,
-      url: j.url,
-      description: j.description,
-    }));
-  return ok({ jobs: matched });
+}
+
+/** Validates the id before any HTTP call and returns the path segment. */
+function resumePath(tool: string, id: string): string | ToolResult {
+  if (!RESUME_ID_RE.test(id)) return fail(tool, "resume_id must be 32 lowercase hex characters");
+  return `/resumes/${encodeURIComponent(id)}`;
+}
+
+function downloadUrl(deps: ToolDeps, path: unknown): string | null {
+  return typeof path === "string" && path.startsWith("/resumes/") ? deps.appOrigin + path : null;
+}
+
+function query(params: Record<string, string | number | boolean | undefined>): string {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined) qs.set(k, String(v));
+  return `?${qs}`;
+}
+
+export async function getResume(deps: ToolDeps, input: ResumeInput): Promise<ToolResult> {
+  const base = resumePath("get_resume", input.resume_id);
+  if (typeof base !== "string") return base;
+  return callApi("get_resume", deps, "GET", base, (json) => {
+    const r = rec(json);
+    const cv = r.cv == null ? null : pick(rec(r.cv), ["name", "headline", "location", "sections"]);
+    return {
+      ...pick(r, ["id", "status", "error", "filename", "progress"]),
+      cv,
+      effective_location: r.effective_location ?? null,
+      page_url: `${deps.appOrigin}/resumes/${encodeURIComponent(input.resume_id)}`,
+    };
+  });
+}
+
+const MATCH_FIELDS = [
+  "job_key", "title", "company", "locations", "workplace_type", "salary_min", "salary_max",
+  "salary_currency", "salary_interval", "posted_at", "score", "fit", "interview", "must_haves",
+  "seniority", "catalog_status",
+];
+
+export function listMatches(deps: ToolDeps, rawInput: ListMatchesInput): Promise<ToolResult> | ToolResult {
+  const base = resumePath("list_matches", rawInput.resume_id);
+  if (typeof base !== "string") return base;
+  const parsed = ListMatchesSchema.safeParse(rawInput);
+  if (!parsed.success) return fail("list_matches", parsed.error.message.slice(0, 300));
+  const { category, nearby, limit, offset } = parsed.data;
+  return callApi("list_matches", deps, "GET", `${base}/match-results${query({ category, nearby, limit, offset })}`, (json) => {
+    const r = rec(json);
+    if (!Array.isArray(r.items)) throw new Error("items is not a list");
+    return {
+      ...pick(r, ["total", "good_total", "other_total", "has_more", "effective_location"]),
+      items: r.items.map((raw) => {
+        const m = rec(raw);
+        return { ...pick(m, MATCH_FIELDS), url: httpsUrl(m.url) };
+      }),
+    };
+  });
+}
+
+export function searchJobs(deps: ToolDeps, rawInput: SearchJobsInput): Promise<ToolResult> | ToolResult {
+  const parsed = SearchJobsSchema.safeParse(rawInput);
+  if (!parsed.success) return fail("search_jobs", parsed.error.message.slice(0, 300));
+  const { q, geo, limit } = parsed.data;
+  return callApi("search_jobs", deps, "GET", `/jobs${query({ q, geo, limit })}`, (json) => {
+    const r = rec(json);
+    if (!Array.isArray(r.jobs)) throw new Error("jobs is not a list");
+    return {
+      ...pick(r, ["synced", "total"]),
+      jobs: r.jobs.map((raw) => {
+        const j = rec(raw);
+        return {
+          ...pick(j, ["id", "company", "title", "locations", "workplace_type", "posted_at"]),
+          url: httpsUrl(j.url),
+          ...pick(j, ["salary_min", "salary_max", "salary_currency"]),
+        };
+      }),
+    };
+  });
+}
+
+export function jobStats(deps: ToolDeps): Promise<ToolResult> {
+  return callApi("job_stats", deps, "GET", "/jobs/stats", (json) =>
+    pick(rec(json), ["synced", "open_jobs", "by_provider", "last_success_at"]),
+  );
+}
+
+function tailoredShape(deps: ToolDeps) {
+  return (json: unknown) => {
+    const r = rec(json);
+    return { ...pick(r, ["id", "status", "error"]), download_url: downloadUrl(deps, r.download_url) };
+  };
+}
+
+export function tailorCv(deps: ToolDeps, input: TailorCvInput): Promise<ToolResult> | ToolResult {
+  const base = resumePath("tailor_cv", input.resume_id);
+  if (typeof base !== "string") return base;
+  return callApi("tailor_cv", deps, "POST", `${base}/tailor`, tailoredShape(deps), { job_key: input.job_key });
+}
+
+export function getTailoredCv(deps: ToolDeps, input: GetTailoredCvInput): Promise<ToolResult> | ToolResult {
+  const base = resumePath("get_tailored_cv", input.resume_id);
+  if (typeof base !== "string") return base;
+  return callApi("get_tailored_cv", deps, "GET", `${base}/tailored/${encodeURIComponent(input.tailored_id)}`, tailoredShape(deps));
+}
+
+export function rematch(deps: ToolDeps, input: RematchInput): Promise<ToolResult> | ToolResult {
+  const base = resumePath("rematch", input.resume_id);
+  if (typeof base !== "string") return base;
+  const body = input.location === undefined ? undefined : { location: input.location };
+  return callApi("rematch", deps, "POST", `${base}/rematch`, (json) => pick(rec(json), ["id"]), body);
+}
+
+export function getTimeSavings(deps: ToolDeps, input: ResumeInput): Promise<ToolResult> | ToolResult {
+  const base = resumePath("get_time_savings", input.resume_id);
+  if (typeof base !== "string") return base;
+  return callApi("get_time_savings", deps, "GET", `${base}/time-savings`, rec);
 }
 
 export interface ToolDef {
@@ -263,49 +230,60 @@ export interface ToolDef {
   description: string;
   /** zod object shape handed to the MCP SDK; empty for tools without input. */
   inputShape: z.ZodRawShape;
-  run: (deps: ClockDeps, input: any) => Promise<ToolResult>;
+  run: (deps: ToolDeps, input: any) => Promise<ToolResult> | ToolResult;
 }
 
 export const TOOLS: ToolDef[] = [
   {
-    name: "get_profile",
+    name: "get_resume",
     description:
-      "Read the user's master CV profile: roles, projects and their bullets. Call this before writing any CV variant.",
-    inputShape: {},
-    run: (deps) => getProfile(deps),
+      "Read the user's AviCV résumé: parsing and matching status, progress, and the parsed CV. Call this first in every conversation.",
+    inputShape: ResumeSchema.shape,
+    run: getResume,
   },
   {
-    name: "save_job",
-    description: "Save a job posting the user is interested in. Returns the stored job with its id.",
-    inputShape: SaveJobSchema.shape,
-    run: saveJob,
-  },
-  {
-    name: "save_variant",
+    name: "list_matches",
     description:
-      "Save a CV variant tailored to a saved job. Each bullet must cite the source_id of the profile role or project it was rewritten from. Do not invent experience.",
-    inputShape: SaveVariantSchema.shape,
-    run: saveVariant,
-  },
-  {
-    name: "save_profile",
-    description:
-      "Replace the user's master CV profile. Only call this after the user has confirmed the summary you showed them. Copy facts from the CV exactly; never add anything that is not in it.",
-    inputShape: ProfileInputSchema.shape,
-    run: saveProfile,
-  },
-  {
-    name: "log_time_saved",
-    description:
-      "Record that you finished a task for the user, so the app can show time saved. Call once after each finished task.",
-    inputShape: LogTimeSavedSchema.shape,
-    run: logTimeSaved,
+      "List jobs AviCV ranked against the user's CV, best first. score, fit, interview and must_haves are 0–1; 'good' means score above 0.8.",
+    inputShape: ListMatchesSchema.shape,
+    run: listMatches,
   },
   {
     name: "search_jobs",
     description:
-      "List open roles from one company's public job board. You must know the company's board name; try the lowercase company name first.",
+      "Full-text search over AviCV's catalog of open jobs (SQLite FTS5 syntax allowed). Use list_matches instead when the user wants jobs that fit their CV.",
     inputShape: SearchJobsSchema.shape,
     run: searchJobs,
+  },
+  {
+    name: "job_stats",
+    description: "How many open jobs AviCV has indexed, by source, and when it last synced.",
+    inputShape: {},
+    run: (deps) => jobStats(deps),
+  },
+  {
+    name: "tailor_cv",
+    description:
+      "Ask AviCV to write a tailored CV PDF for one of the user's matches. job_key must come from list_matches. Returns immediately; the CV takes a minute or two.",
+    inputShape: TailorCvSchema.shape,
+    run: tailorCv,
+  },
+  {
+    name: "get_tailored_cv",
+    description: "Check a tailored CV. When status is ready, give the user download_url.",
+    inputShape: GetTailoredCvSchema.shape,
+    run: getTailoredCv,
+  },
+  {
+    name: "rematch",
+    description: "Re-rank the user's matches, optionally for a different location. Takes a few minutes.",
+    inputShape: RematchSchema.shape,
+    run: rematch,
+  },
+  {
+    name: "get_time_savings",
+    description: "How much time AviCV has saved the user so far.",
+    inputShape: ResumeSchema.shape,
+    run: getTimeSavings,
   },
 ];

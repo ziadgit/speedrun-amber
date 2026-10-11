@@ -85,7 +85,6 @@ Everything is read in one place, `src/config.ts`.
 | `bun test` | Unit and in-process server tests, no live network |
 | `bun run build` | Bundles the chat page into `dist/chat` |
 | `bun run darwin-probe` | One live Darwin search |
-| `bun run boards-probe` | One live fetch per job board |
 
 ## Design rules
 
@@ -110,7 +109,6 @@ src/
   instructions.ts   system prompt
   mcp/              cv-tools: tools.ts, schemas.ts, server.ts
   chat/             React page, CV attachments (DOCX → text via mammoth)
-scripts/            fake-api, darwin-probe, boards-probe
 specs/              00–07, the source of truth
 ```
 
