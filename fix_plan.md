@@ -35,5 +35,3 @@ page tells its parent frame what changed.
 
 ## Discovered
 
-### Audit 2026-10-11 — ⚡ high
-- [ ] P1 `parseOrigin` rejects valid origins: `loadConfig({APP_ORIGIN:"https://example.com:443"})`, `"http://localhost:80"` and `"HTTP://Localhost:5173"` all throw "must be a bare origin (no path)" because it compares `url.origin` to the raw string (default ports and case are normalized away). Judge "bare" by the parsed URL instead (pathname `/`, no search, hash or credentials) and return `url.origin`. Add the three cases to `src/config.test.ts` (each expects the normalized origin); `"http://x/path"`, `"*"` still throw (spec 01 Config)

@@ -32,3 +32,14 @@ test("rejects bad PORT", () => {
     expect(() => loadConfig({ PORT: v })).toThrow("PORT");
   }
 });
+
+test("normalizes default ports and case in APP_ORIGIN", () => {
+  const cases: [string, string][] = [
+    ["https://example.com:443", "https://example.com"],
+    ["http://localhost:80", "http://localhost"],
+    ["HTTP://Localhost:5173", "http://localhost:5173"],
+  ];
+  for (const [input, want] of cases) {
+    expect(loadConfig({ APP_ORIGIN: input }).appOrigin).toBe(want);
+  }
+});

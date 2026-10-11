@@ -26,7 +26,12 @@ function parseOrigin(value: string): string {
   } catch {
     throw new Error(`APP_ORIGIN must be a URL origin, got "${value}"`);
   }
-  if (url.origin === "null" || url.origin !== value.replace(/\/$/, "")) {
+  if (url.origin === "null" ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash ||
+    url.username ||
+    url.password) {
     throw new Error(`APP_ORIGIN must be a bare origin (no path), got "${value}"`);
   }
   return url.origin;

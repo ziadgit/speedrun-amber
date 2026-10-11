@@ -12,3 +12,6 @@
 - [x] P0 Change tracker treats a result as failed when its JSON envelope has `isError: true`; replace bare-string tests with the real envelope (spec 04 "Success test")
 - [x] P1 `/mcp` rejects non-loopback clients with 403 via `server.requestIP`, injectable `clientIp` for tests (spec 01 "`/mcp` is loopback-only")
 - [x] P2 `.env.example` gains `COPILOTKIT_TELEMETRY_DISABLED=true`; missing-`MODEL` error example uses `anthropic:` form (spec 01 Config)
+
+### Audit 2026-10-11 — ⚡ high
+- [x] P1 `parseOrigin` rejects valid origins: `loadConfig({APP_ORIGIN:"https://example.com:443"})`, `"http://localhost:80"` and `"HTTP://Localhost:5173"` all throw "must be a bare origin (no path)" because it compares `url.origin` to the raw string (default ports and case are normalized away). Judge "bare" by the parsed URL instead (pathname `/`, no search, hash or credentials) and return `url.origin`. Add the three cases to `src/config.test.ts` (each expects the normalized origin); `"http://x/path"`, `"*"` still throw (spec 01 Config)
