@@ -21,10 +21,10 @@ async function connect() {
   return client;
 }
 
-test("lists exactly the four cv-tools", async () => {
+test("lists exactly the five cv-tools", async () => {
   const client = await connect();
   const { tools } = await client.listTools();
-  expect(tools.map((t) => t.name).sort()).toEqual(["get_profile", "log_time_saved", "save_job", "save_variant"]);
+  expect(tools.map((t) => t.name).sort()).toEqual(["get_profile", "log_time_saved", "save_job", "save_variant", "search_jobs"]);
   expect(client.getServerVersion()?.name).toBe("cv-tools");
   await client.close();
 });

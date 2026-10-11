@@ -57,6 +57,13 @@ export const SaveJobInput = z.object({
   url: z.string().optional(),
 });
 
+export const SearchJobsInput = z.object({
+  board: z.enum(["greenhouse", "lever", "ashby"]),
+  company: z.string(),
+  query: z.string().optional(),
+  limit: z.number().int().min(1).max(20).default(10),
+});
+
 export const TaskName = z.enum(["find_jobs", "tailor_cv"]);
 
 export const LogTimeSavedInput = z.object({ task: TaskName });
@@ -69,3 +76,4 @@ export type Bullet = z.infer<typeof Bullet>;
 export type Profile = z.infer<typeof Profile>;
 export type Variant = z.infer<typeof Variant>;
 export type SaveVariantInput = z.infer<typeof SaveVariantInput>;
+export type SearchJobsInput = z.input<typeof SearchJobsInput>;

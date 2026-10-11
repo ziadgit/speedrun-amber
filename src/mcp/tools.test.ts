@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getProfile, logTimeSaved, saveJob, saveVariant } from "./tools";
+import { getProfile, logTimeSaved, saveJob, saveVariant, searchJobs } from "./tools";
 
 interface Call { url: string; init: RequestInit }
 
@@ -133,5 +133,73 @@ describe("log_time_saved", () => {
     const { f } = fakeFetch(() => Promise.reject(new Error("down")));
     const r = await logTimeSaved({ fetch: f, apiUrl: "http://api", now: () => 0, startedAt: 0 }, { task: "find_jobs" });
     expect(r.content[0]!.text).toBe("log_time_saved failed: down");
+  });
+});
+
+describe("searchJobs", () => {
+  const fixture = async (name: string) => await Bun.file(new URL(`./fixtures/${name}.json`, import.meta.url)).text();
+  const fakeBoard = (body: string, status = 200) => {
+    const urls: string[] = [];
+    const f = (async (url: string) => {
+      urls.push(url);
+      return new Response(body, { status });
+    }) as unknown as typeof fetch;
+    return { fetch: f, urls };
+  };
+
+  test("greenhouse: unescapes, strips, drops non-https urls", async () => {
+    const d = fakeBoard(await fixture("greenhouse"));
+    const r = await searchJobs(d, { board: "greenhouse", company: "acme", query: "BACKEND" });
+    expect(d.urls).toEqual(["https://boards-api.greenhouse.io/v1/boards/acme/jobs?content=true"]);
+    expect(r.structuredContent).toEqual({
+      jobs: [
+        {
+          title: "Backend Engineer, Payments",
+          company: "Acme",
+          location: "Remote",
+          url: "https://boards.greenhouse.io/acme/jobs/1",
+          description: "Build & run payments services.",
+        },
+      ],
+    });
+  });
+
+  test("lever: array body, null location, company from input", async () => {
+    const r = await searchJobs(fakeBoard(await fixture("lever")), { board: "lever", company: "acme" });
+    const jobs = (r.structuredContent as { jobs: { title: string; location: string | null; company: string }[] }).jobs;
+    expect(jobs.map((j) => [j.title, j.location, j.company])).toEqual([
+      ["Backend Engineer", "Berlin", "acme"],
+      ["Sales Lead", null, "acme"],
+    ]);
+  });
+
+  test("ashby: trims titles, honors limit, rejects http urls", async () => {
+    const d = fakeBoard(await fixture("ashby"));
+    const r = await searchJobs(d, { board: "ashby", company: "acme", limit: 5 });
+    const jobs = (r.structuredContent as { jobs: { title: string }[] }).jobs;
+    expect(jobs.map((j) => j.title)).toEqual(["Backend Engineer"]);
+  });
+
+  test("description is cut to 1500 chars", async () => {
+    const body = JSON.stringify([{ text: "A", hostedUrl: "https://x.test/1", descriptionPlain: "x".repeat(5000) }]);
+    const r = await searchJobs(fakeBoard(body), { board: "lever", company: "acme" });
+    expect((r.structuredContent as { jobs: { description: string }[] }).jobs[0]!.description).toHaveLength(1500);
+  });
+
+  test("invalid company never fetches", async () => {
+    const d = fakeBoard("[]");
+    const r = await searchJobs(d, { board: "lever", company: "../evil" });
+    expect(r.isError).toBe(true);
+    expect(d.urls).toEqual([]);
+  });
+
+  test("404, bad shape and network error are isError", async () => {
+    expect((await searchJobs(fakeBoard("nope", 404), { board: "lever", company: "acme" })).isError).toBe(true);
+    expect((await searchJobs(fakeBoard("{}"), { board: "ashby", company: "acme" })).isError).toBe(true);
+    const boom = (async () => {
+      throw new Error("down");
+    }) as unknown as typeof fetch;
+    const r = await searchJobs({ fetch: boom }, { board: "lever", company: "acme" });
+    expect(r.content[0]!.text).toBe("search_jobs failed: down");
   });
 });

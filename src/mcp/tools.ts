@@ -7,6 +7,8 @@ import {
   SaveVariantInput as SaveVariantSchema,
   SaveJobInput,
   SaveVariantInput,
+  SearchJobsInput as SearchJobsSchema,
+  type SearchJobsInput,
   TimeSaved,
   Variant,
   type LogTimeSavedInput,
@@ -123,6 +125,122 @@ export function logTimeSaved(deps: ClockDeps, input: LogTimeSavedInput): Promise
   });
 }
 
+const BOARD_URLS: Record<SearchJobsInput["board"], (company: string) => string> = {
+  greenhouse: (c) => `https://boards-api.greenhouse.io/v1/boards/${c}/jobs?content=true`,
+  lever: (c) => `https://api.lever.co/v0/postings/${c}?mode=json`,
+  ashby: (c) => `https://api.ashbyhq.com/posting-api/job-board/${c}`,
+};
+
+const COMPANY_RE = /^[a-z0-9-]{1,64}$/;
+const DESCRIPTION_MAX = 1500;
+
+function unescapeHtml(s: string): string {
+  return s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&");
+}
+
+function stripHtml(s: string): string {
+  return s.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+interface BoardJob {
+  title: string;
+  location: string | null;
+  url: string;
+  description: string;
+  company?: string;
+}
+
+const str = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
+const rec = (v: unknown): Record<string, unknown> =>
+  v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+
+function parseBoard(board: SearchJobsInput["board"], body: unknown): BoardJob[] {
+  const list = Array.isArray(body) ? body : rec(body).jobs;
+  if (!Array.isArray(list)) throw new Error("no job list");
+  const out: BoardJob[] = [];
+  for (const raw of list) {
+    const j = rec(raw);
+    let title: string | undefined;
+    let url: string | undefined;
+    let location: string | undefined;
+    let description: string;
+    let company: string | undefined;
+    if (board === "greenhouse") {
+      title = str(j.title);
+      url = str(j.absolute_url);
+      location = str(rec(j.location).name);
+      description = stripHtml(unescapeHtml(str(j.content) ?? ""));
+      company = str(j.company_name);
+    } else if (board === "lever") {
+      title = str(j.text);
+      url = str(j.hostedUrl);
+      location = str(rec(j.categories).location);
+      description = stripHtml(str(j.descriptionPlain) ?? "");
+    } else {
+      title = str(j.title);
+      url = str(j.jobUrl);
+      location = str(j.location);
+      description = stripHtml(str(j.descriptionPlain) ?? "");
+    }
+    if (title === undefined || url === undefined) continue;
+    try {
+      if (new URL(url).protocol !== "https:") continue;
+    } catch {
+      continue;
+    }
+    out.push({
+      title: title.trim(),
+      location: location?.trim() || null,
+      url,
+      description: description.slice(0, DESCRIPTION_MAX),
+      company,
+    });
+  }
+  return out;
+}
+
+/** The one tool that does not call the app API: one GET to a public job board. */
+export async function searchJobs(deps: Pick<ToolDeps, "fetch">, input: SearchJobsInput): Promise<ToolResult> {
+  if (!COMPANY_RE.test(input.company)) {
+    return fail("search_jobs", "company must match ^[a-z0-9-]{1,64}$");
+  }
+  const parsed = SearchJobsSchema.safeParse(input);
+  if (!parsed.success) return fail("search_jobs", parsed.error.message.slice(0, 300));
+  const { board, company, query, limit } = parsed.data;
+  let res: Response;
+  try {
+    res = await deps.fetch(BOARD_URLS[board](company), { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  } catch (err) {
+    return fail("search_jobs", err instanceof Error ? err.message : String(err));
+  }
+  const text = await res.text().catch(() => "");
+  if (res.status === 404) return fail("search_jobs", `no ${board} board named ${company}`);
+  if (!res.ok) return fail("search_jobs", `${res.status} ${text.slice(0, 300)}`);
+  let jobs: BoardJob[];
+  try {
+    jobs = parseBoard(board, JSON.parse(text));
+  } catch {
+    return fail("search_jobs", `unexpected response shape ${text.slice(0, 300)}`);
+  }
+  const q = query?.toLowerCase();
+  const matched = (q ? jobs.filter((j) => j.title.toLowerCase().includes(q)) : jobs)
+    .slice(0, limit)
+    .map((j) => ({
+      title: j.title,
+      company: j.company ?? company,
+      location: j.location,
+      url: j.url,
+      description: j.description,
+    }));
+  return ok({ jobs: matched });
+}
+
 export interface ToolDef {
   name: string;
   description: string;
@@ -158,5 +276,12 @@ export const TOOLS: ToolDef[] = [
       "Record that you finished a task for the user, so the app can show time saved. Call once after each finished task.",
     inputShape: LogTimeSavedSchema.shape,
     run: logTimeSaved,
+  },
+  {
+    name: "search_jobs",
+    description:
+      "List open roles from one company's public job board. You must know the company's board name; try the lowercase company name first.",
+    inputShape: SearchJobsSchema.shape,
+    run: searchJobs,
   },
 ];
