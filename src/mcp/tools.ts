@@ -1,5 +1,14 @@
 import type { z } from "zod";
-import { Profile, SaveVariantInput, Variant } from "./schemas";
+import {
+  Job,
+  Profile,
+  SaveJobInput,
+  SaveVariantInput,
+  TimeSaved,
+  Variant,
+  type LogTimeSavedInput,
+  type TaskName,
+} from "./schemas";
 
 export interface ToolDeps {
   fetch: typeof fetch;
@@ -11,6 +20,17 @@ export interface ToolResult {
   content: { type: "text"; text: string }[];
   structuredContent?: Record<string, unknown>;
   isError?: boolean;
+}
+
+export const BASELINE_SECONDS: Record<TaskName, number> = {
+  find_jobs: 1200,
+  tailor_cv: 1800,
+};
+
+/** Deps for tools that measure time: `now` is epoch ms, `startedAt` the session's first call. */
+export interface ClockDeps extends ToolDeps {
+  now: () => number;
+  startedAt: number;
 }
 
 const TIMEOUT_MS = 10_000;
@@ -79,4 +99,23 @@ export function saveVariant(deps: ToolDeps, input: SaveVariantInput): Promise<To
     { job_id: input.job_id, bullets: input.bullets },
     `job ${input.job_id} not found`,
   );
+}
+
+export function saveJob(deps: ToolDeps, input: SaveJobInput): Promise<ToolResult> {
+  const body: Record<string, unknown> = {
+    title: input.title,
+    company: input.company,
+    description: input.description,
+  };
+  if (input.url !== undefined) body.url = input.url;
+  return callApi("save_job", deps, "POST", "/jobs", Job, body);
+}
+
+export function logTimeSaved(deps: ClockDeps, input: LogTimeSavedInput): Promise<ToolResult> {
+  const secondsTaken = Math.max(1, Math.round((deps.now() - deps.startedAt) / 1000));
+  return callApi("log_time_saved", deps, "POST", "/time-saved", TimeSaved, {
+    task: input.task,
+    seconds_taken: secondsTaken,
+    baseline_seconds: BASELINE_SECONDS[input.task],
+  });
 }

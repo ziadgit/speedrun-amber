@@ -50,6 +50,21 @@ export const SaveVariantInput = z.object({
   bullets: z.array(Bullet).min(1),
 });
 
+export const SaveJobInput = z.object({
+  title: z.string(),
+  company: z.string(),
+  description: z.string(),
+  url: z.string().optional(),
+});
+
+export const TaskName = z.enum(["find_jobs", "tailor_cv"]);
+
+export const LogTimeSavedInput = z.object({ task: TaskName });
+
+export type Job = z.infer<typeof Job>;
+export type SaveJobInput = z.infer<typeof SaveJobInput>;
+export type TaskName = z.infer<typeof TaskName>;
+export type LogTimeSavedInput = z.infer<typeof LogTimeSavedInput>;
 export type Bullet = z.infer<typeof Bullet>;
 export type Profile = z.infer<typeof Profile>;
 export type Variant = z.infer<typeof Variant>;

@@ -22,7 +22,7 @@ page tells its parent frame what changed.
 
 ### cv-tools — 🧠 xhigh
 - [x] P0 `src/mcp/schemas.ts` + `src/mcp/tools.ts` with `get_profile` and `save_variant`, fake-fetch tests incl. error paths (spec 02)
-- [ ] P0 `save_job` and `log_time_saved` (injected clock, fixed baselines) with tests (spec 02)
+- [x] P0 `save_job` and `log_time_saved` (injected clock, fixed baselines) with tests (spec 02)
 - [ ] P0 `src/mcp/server.ts` MCP handler mounted at `/mcp`; test connects SDK `Client` on port 0 and lists exactly the four tools (spec 02)
 
 ### Dev API — ⚡ high

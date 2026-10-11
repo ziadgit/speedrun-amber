@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getProfile, saveVariant } from "./tools";
+import { getProfile, logTimeSaved, saveJob, saveVariant } from "./tools";
 
 interface Call { url: string; init: RequestInit }
 
@@ -72,5 +72,66 @@ describe("save_variant", () => {
     const { f } = fakeFetch(() => new Response("bad", { status: 500 }));
     const r = await saveVariant({ fetch: f, apiUrl: "http://api" }, input);
     expect(r.content[0]!.text).toBe("save_variant failed: 500 bad");
+  });
+});
+
+describe("save_job", () => {
+  const job = {
+    id: "job-1", title: "BE", company: "Acme", description: "d", url: null,
+    created_at: "2026-01-01T00:00:00Z",
+  };
+
+  test("POSTs /jobs and omits url when absent", async () => {
+    const { f, calls } = fakeFetch(() => Response.json(job));
+    const r = await saveJob({ fetch: f, apiUrl: "http://api" }, { title: "BE", company: "Acme", description: "d" });
+    expect(calls[0]!.url).toBe("http://api/jobs");
+    expect(calls[0]!.init.method).toBe("POST");
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual({ title: "BE", company: "Acme", description: "d" });
+    expect(r.structuredContent).toEqual(job);
+  });
+
+  test("sends url when given", async () => {
+    const { f, calls } = fakeFetch(() => Response.json(job));
+    await saveJob({ fetch: f, apiUrl: "http://api" }, { title: "BE", company: "Acme", description: "d", url: "https://x.io/1" });
+    expect(JSON.parse(calls[0]!.init.body as string).url).toBe("https://x.io/1");
+  });
+
+  test("422 becomes an error result", async () => {
+    const { f } = fakeFetch(() => new Response("bad body", { status: 422 }));
+    const r = await saveJob({ fetch: f, apiUrl: "http://api" }, { title: "", company: "", description: "" });
+    expect(r.isError).toBe(true);
+    expect(r.content[0]!.text).toBe("save_job failed: 422 bad body");
+  });
+});
+
+describe("log_time_saved", () => {
+  const saved = { total_seconds_saved: 1790, entries: 1 };
+
+  test("computes body from the injected clock and baseline", async () => {
+    const { f, calls } = fakeFetch(() => Response.json(saved));
+    const r = await logTimeSaved(
+      { fetch: f, apiUrl: "http://api", now: () => 10_000 + 10_400, startedAt: 10_000 },
+      { task: "tailor_cv" },
+    );
+    expect(calls[0]!.url).toBe("http://api/time-saved");
+    expect(calls[0]!.init.method).toBe("POST");
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual({
+      task: "tailor_cv", seconds_taken: 10, baseline_seconds: 1800,
+    });
+    expect(r.structuredContent).toEqual(saved);
+  });
+
+  test("seconds_taken is at least 1 and find_jobs baseline is 1200", async () => {
+    const { f, calls } = fakeFetch(() => Response.json(saved));
+    await logTimeSaved({ fetch: f, apiUrl: "http://api", now: () => 5, startedAt: 5 }, { task: "find_jobs" });
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual({
+      task: "find_jobs", seconds_taken: 1, baseline_seconds: 1200,
+    });
+  });
+
+  test("failure is an error result", async () => {
+    const { f } = fakeFetch(() => Promise.reject(new Error("down")));
+    const r = await logTimeSaved({ fetch: f, apiUrl: "http://api", now: () => 0, startedAt: 0 }, { task: "find_jobs" });
+    expect(r.content[0]!.text).toBe("log_time_saved failed: down");
   });
 });
