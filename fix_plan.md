@@ -18,7 +18,7 @@ page tells its parent frame what changed.
 
 ### Foundation — ⚡ high
 - [x] P0 Scaffold: `package.json` (scripts from spec 01), `tsconfig.json`, deps installed, `.env.example`, `src/config.ts` + tests, `src/server.ts` with `/health` and 404 + test on port 0 (spec 01)
-- [ ] P0 `scripts/darwin-probe.ts`: write it, run it once live, fill in "Probe result" in spec 05, then unblock or delete the `search_jobs` items below (spec 05)
+- [x] P0 `scripts/darwin-probe.ts`: write it, run it once live, fill in "Probe result" in spec 05, then unblock or delete the `search_jobs` items below (spec 05)
 
 ### cv-tools — 🧠 xhigh
 - [x] P0 `src/mcp/schemas.ts` + `src/mcp/tools.ts` with `get_profile` and `save_variant`, fake-fetch tests incl. error paths (spec 02)
@@ -37,7 +37,7 @@ page tells its parent frame what changed.
 - [ ] P0 Post `speedhack:changed` to `appOrigin` once per successful cv-tools call, using the installed react-core API; record the hook used in `AGENT.md` (spec 04)
 
 ### Job boards fallback — ⚡ high
-- [ ] P1 Boards probe: fetch one live board per provider, correct the URL/shape table in spec 06 (spec 06) blocked-by: darwin-probe result
+- [ ] P1 Boards probe: fetch one live board per provider, correct the URL/shape table in spec 06 (spec 06)
 - [ ] P1 `search_jobs` tool with fixture-based tests, registered in cv-tools; add the instructions line (spec 06) blocked-by: boards probe
 
 ## Discovered
