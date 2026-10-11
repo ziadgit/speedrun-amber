@@ -44,3 +44,7 @@ page tells its parent frame what changed.
 ### Live-run fixes 2026-10-11 — 🧠 xhigh
 - [x] P0 Expose only Darwin's `search` to the agent via an `mcpClients` provider in `src/darwin.ts`; schema guard test for cv-tools (spec 03 "Darwin tools: `search` only")
 - [x] P2 Send `anthropic-workspace-id` when `ANTHROPIC_WORKSPACE_ID` is set: config field, `@ai-sdk/anthropic` direct dep, `agentModel()` in `runtime.ts`, header test with injected fetch, `.env.example` line (spec 03 "Model", spec 01 Config)
+
+### CV upload fixes 2026-10-11 — ⚡ high
+- [ ] P0 `onUpload` normalizes MIME types to `application/pdf` or `text/plain` and rejects other files with a clear message; tests for `.md` with empty and `text/markdown` types, `.PDF` with empty type, `.png` (spec 07 "MIME types sent to the model")
+- [ ] P2 `AGENT.md`: note that `PORT` may need to differ from 4000 (on the dev Mac 4000 is NoMachine; `.env` uses 4001) and use `localhost:$PORT` in Live smoke (spec 01 Config)

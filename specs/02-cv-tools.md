@@ -66,4 +66,4 @@ fills the REST body:
   (`API_URL` + path), body, parsed output, and the error path.
 - `log_time_saved` test uses a fake clock and checks the computed body.
 - A test connects the SDK `Client` to the `/mcp` handler served on port 0 and
-  sees exactly the five tools with the names above.
+  sees exactly the tools in `TOOLS` (six: the five above plus `search_jobs`, spec 06).

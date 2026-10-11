@@ -66,6 +66,20 @@ profile query on `speedhack:changed` with `resource: "profile"`.
 - Manual (AGENT.md "Live smoke"): `FAKE_API_EMPTY_PROFILE=1 bun run fake-api`,
   attach a PDF CV in `/chat`, confirm, then ask for a tailored CV.
 
+## MIME types sent to the model
+The installed `@ai-sdk/anthropic` accepts file parts only as `application/pdf`
+or `text/plain` (plus images) and throws `UnsupportedFunctionalityError` for
+anything else, failing the whole run. Browsers report `.md` as `text/markdown` or
+as an empty type (sent as `application/octet-stream`). So `onUpload` normalizes
+before returning the data source, judging by extension first, then `file.type`:
+- `.pdf` or `application/pdf` → `application/pdf`
+- `.docx` or the DOCX MIME type → converted to text (P2 below) → `text/plain`
+- `.md`, `.markdown`, `.txt`, or any `text/*` type → `text/plain`, bytes unchanged
+- anything else → throw an `Error` whose message reads "Please attach your CV as a PDF, Word (.docx), Markdown or text file", which `onUploadFailed` shows
+
+Tests: `cv.md` with type `""` and with `text/markdown` → `text/plain`; `cv.PDF`
+with type `""` → `application/pdf`; `cv.png` → rejected with the message.
+
 ## P2 · DOCX (done)
 `onUpload` in `attachments.ts` converts `.docx` in the browser to plain text with
 `mammoth` (browser build), returning a `text/plain` data source with the original
