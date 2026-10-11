@@ -25,6 +25,9 @@ test("changedMessage shape", () => {
   expect(changedMessage("jobs")).toEqual({ type: "speedhack:changed", resource: "jobs" });
 });
 
+const ok = JSON.stringify({ content: [{ type: "text", text: '{"id":"j1"}' }] });
+const fail = JSON.stringify({ content: [{ type: "text", text: "save_variant failed: 422" }], isError: true });
+
 describe("createChangeTracker", () => {
   const setup = () => {
     const posted: unknown[] = [];
@@ -34,18 +37,25 @@ describe("createChangeTracker", () => {
   test("posts once per successful cv-tools call", () => {
     const { posted, tracker } = setup();
     tracker.started("t1", "cv_save_job");
-    tracker.result("t1", '{"id":"j1"}');
-    tracker.result("t1", '{"id":"j1"}');
+    tracker.result("t1", ok);
+    tracker.result("t1", ok);
     expect(posted).toEqual([{ type: "speedhack:changed", resource: "jobs" }]);
   });
 
   test("ignores failures, read tools and unknown calls", () => {
     const { posted, tracker } = setup();
     tracker.started("t1", "save_variant");
-    tracker.result("t1", "save_variant failed: 422");
+    tracker.result("t1", fail);
     tracker.started("t2", "get_profile");
-    tracker.result("t2", "{}");
-    tracker.result("t3", "{}");
+    tracker.result("t2", ok);
+    tracker.result("t3", ok);
+    expect(posted).toEqual([]);
+  });
+
+  test("falls back to the failed-text prefix when content is not JSON", () => {
+    const { posted, tracker } = setup();
+    tracker.started("t1", "save_job");
+    tracker.result("t1", "save_job failed: 500");
     expect(posted).toEqual([]);
   });
 });

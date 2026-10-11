@@ -37,6 +37,6 @@ page tells its parent frame what changed.
 
 ### Review fixes 2026-10-11 — 🧠 xhigh
 - [x] P0 `log_time_saved` timing: task start resets after each `log_time_saved` instead of being server-lifetime; tests for the two scenarios in spec 02 (spec 02 "Task start")
-- [ ] P0 Change tracker treats a result as failed when its JSON envelope has `isError: true`; replace bare-string tests with the real envelope (spec 04 "Success test")
+- [x] P0 Change tracker treats a result as failed when its JSON envelope has `isError: true`; replace bare-string tests with the real envelope (spec 04 "Success test")
 - [ ] P1 `/mcp` rejects non-loopback clients with 403 via `server.requestIP`, injectable `clientIp` for tests (spec 01 "`/mcp` is loopback-only")
 - [ ] P2 `.env.example` gains `COPILOTKIT_TELEMETRY_DISABLED=true`; missing-`MODEL` error example uses `anthropic:` form (spec 01 Config)
