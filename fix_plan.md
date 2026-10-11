@@ -25,9 +25,6 @@ page tells its parent frame what changed.
 - [x] P0 `save_job` and `log_time_saved` (injected clock, fixed baselines) with tests (spec 02)
 - [x] P0 `src/mcp/server.ts` MCP handler mounted at `/mcp`; test connects SDK `Client` on port 0 and lists exactly the four tools (spec 02)
 
-### Dev API — ⚡ high
-- [ ] P0 `scripts/fake-api.ts` with `createFakeApi(port)` + tests; round-trip test: SDK `Client` → `/mcp` → fake API, `save_job` then `save_variant` (spec 05, spec 02)
-
 ### Agent — 🧠 xhigh
 - [ ] P0 `src/instructions.ts` + `src/runtime.ts` (`createCopilotHandler`), mounted at `/api/copilotkit`; tests: missing `MODEL` error, Darwin rules verbatim, handler answers a no-model request (spec 03)
 
