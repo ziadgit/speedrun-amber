@@ -66,7 +66,7 @@ profile query on `speedhack:changed` with `resource: "profile"`.
 - Manual (AGENT.md "Live smoke"): `FAKE_API_EMPTY_PROFILE=1 bun run fake-api`,
   attach a PDF CV in `/chat`, confirm, then ask for a tailored CV.
 
-## P2 · DOCX
+## P2 · DOCX (done)
 `onUpload` in `attachments.ts` converts `.docx` in the browser to plain text with
 `mammoth` (browser build), returning a `text/plain` data source with the original
 filename in metadata. Other types go through unchanged. Add `.docx` and its MIME

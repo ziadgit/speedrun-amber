@@ -22,7 +22,7 @@ append duplicates. It is read on every loop, so length costs every loop.
 - `bun run boards-probe` — one live fetch per job board (network; never in tests)
 - `bun run typecheck` — `tsc --noEmit`
 - `bun test` — unit + in-process server tests, no live network
-- `bun run build` — bundles the chat page (minified, ~17.3 MB js + 1.5 MB css) to `dist/chat`
+- `bun run build` — bundles the chat page (minified, ~17.6 MB js + 1.5 MB css) to `dist/chat`
 
 Verify order (one subagent): typecheck → test → build.
 
@@ -39,7 +39,7 @@ Live smoke, CV upload: `FAKE_API_EMPTY_PROFILE=1 bun run fake-api`, attach a PDF
 - `src/server.ts` — `createServer(config, deps?)`, path-prefix dispatch.
 - `src/darwin.ts` — `createDarwinProvider` (`mcpClients` entry, `search` only; union-schema tools break Anthropic). `src/runtime.ts` — `createCopilotHandler(config)`; `src/instructions.ts` — system prompt.
 - `src/mcp/` — `tools.ts` (one fn per tool + TOOLS table), `schemas.ts` (zod), `server.ts` (MCP handler).
-- `src/chat/` — `index.html`, `main.tsx`, `messages.ts` (pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
+- `src/chat/` — `attachments.ts` (CV upload; DOCX→text via `mammoth/mammoth.browser.js`, typed by `mammoth.d.ts`), `index.html`, `main.tsx`, `messages.ts` (pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
 - `scripts/` — `fake-api.ts` (`FAKE_API_EMPTY_PROFILE=1` starts with no profile), `darwin-probe.ts`. Live network allowed here only.
 
 ## Gotchas
