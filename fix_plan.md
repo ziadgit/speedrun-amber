@@ -44,3 +44,8 @@ page tells its parent frame what changed.
 ### Live-run fixes 2026-10-11 — 🧠 xhigh
 - [x] P0 Expose only Darwin's `search` to the agent via an `mcpClients` provider in `src/darwin.ts`; schema guard test for cv-tools (spec 03 "Darwin tools: `search` only")
 - [x] P2 Send `anthropic-workspace-id` when `ANTHROPIC_WORKSPACE_ID` is set: config field, `@ai-sdk/anthropic` direct dep, `agentModel()` in `runtime.ts`, header test with injected fetch, `.env.example` line (spec 03 "Model", spec 01 Config)
+
+### AviCV review fixes 2026-10-11 — ⚡ high
+- [ ] P1 Live tailored-CV card: proxy route `GET resumes/:id/tailored/:aid` (aid validated), card polls every 5 s until ready/failed then shows Download PDF, posts `avicv:changed` "tailored" once on ready; pure poll-rule helper + proxy tests (spec 08 "Follow-ups from review")
+- [ ] P1 Stale résumé id: 404 from the résumé proxy clears the id (storage + URL + agent context) and shows Upload with the "no longer in AviCV" message; standalone "Use a different CV" link; tests for the clearing helper (spec 08 "Follow-ups from review")
+- [ ] P2 Disable "Tailor my CV" while the agent is running (installed v2 `isRunning` or equivalent from the `.d.ts`); proxy passes `Retry-After` on 429 with a test (spec 08 "Follow-ups from review")

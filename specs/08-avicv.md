@@ -90,6 +90,24 @@ format as spec 02 ("Results and errors"), except the error text uses FastAPI's
 - Visible copy says **AviCV**, never speedhack or amber. Page `<title>`:
   "AviCV agent".
 
+## Follow-ups from review (2026-10-11)
+- **Stale résumé id.** If `GET /chat/avicv/resumes/<id>` answers 404, the page
+  forgets the id (localStorage and `?resume=`), sets it to null (so the agent
+  context is empty) and shows the Upload button with "That CV is no longer in
+  AviCV. Upload it again." On the standalone page (not framed), the strip also
+  shows a small "Use a different CV" link that clears the id the same way.
+- **Live tailored-CV card.** Add proxy route `GET resumes/:id/tailored/:aid`
+  (aid: `^[0-9a-f-]{1,64}$`, else 400) → `API_URL/resumes/:id/tailored/:aid`.
+  The tailored card polls it every 5 s while status is `queued`,
+  `waiting_for_design`, `tailoring` or `rendering`, stops on `ready`/`failed` or
+  unmount, and then shows "Download PDF" (`${APP_ORIGIN}` + AviCV's
+  `download_url`, checked with `safeDownloadUrl`). When it turns ready, post
+  `avicv:changed` with `resource: "tailored"` once. The user never has to ask
+  "is it ready?".
+- **Tailor button while busy.** The "Tailor my CV" buttons are disabled while
+  the agent is running, so a click can't start a second run.
+- The proxy passes through AviCV's `Retry-After` header on 429.
+
 ## Change notifications
 Rename `speedhack:changed` to `avicv:changed`. `resourceForTool`:
 `tailor_cv`/`get_tailored_cv` → `"tailored"`, `rematch` → `"resume"`; others
