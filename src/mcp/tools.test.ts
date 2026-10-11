@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getProfile, logTimeSaved, saveJob, saveVariant, searchJobs } from "./tools";
+import { getProfile, logTimeSaved, saveJob, saveProfile, saveVariant, searchJobs } from "./tools";
 
 interface Call { url: string; init: RequestInit }
 
@@ -45,6 +45,45 @@ describe("get_profile", () => {
     const bad = fakeFetch(() => Response.json({ nope: true }));
     const r2 = await getProfile({ fetch: bad.f, apiUrl: "http://api" });
     expect(r2.isError).toBe(true);
+  });
+});
+
+describe("get_profile 404", () => {
+  test("reads no profile yet", async () => {
+    const { f } = fakeFetch(() => new Response("x", { status: 404 }));
+    const r = await getProfile({ fetch: f, apiUrl: "http://api" });
+    expect(r.isError).toBe(true);
+    expect(r.content[0]!.text).toBe("get_profile failed: no profile yet; ask the user to upload their CV");
+  });
+});
+
+describe("save_profile", () => {
+  const input = {
+    name: "A",
+    headline: "h",
+    roles: [{ id: "role-1", title: "t", company: "c", start: "2020-01-01", end: null, bullets: ["b"] }],
+    projects: [{ id: "proj-1", name: "p", bullets: ["b"] }],
+  };
+
+  test("PUTs /profile with the input as body", async () => {
+    const { f, calls } = fakeFetch(() => Response.json(input));
+    const r = await saveProfile({ fetch: f, apiUrl: "http://api" }, input);
+    expect(calls[0]!.url).toBe("http://api/profile");
+    expect(calls[0]!.init.method).toBe("PUT");
+    expect(new Headers(calls[0]!.init.headers).get("content-type")).toBe("application/json");
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual(input);
+    expect(r.structuredContent).toEqual(input);
+  });
+
+  test("non-2xx, network error and bad shape become error results", async () => {
+    const bad = fakeFetch(() => new Response("nope", { status: 422 }));
+    const r1 = await saveProfile({ fetch: bad.f, apiUrl: "http://api" }, input);
+    expect(r1.content[0]!.text).toBe("save_profile failed: 422 nope");
+    const down = fakeFetch(() => Promise.reject(new Error("ECONNREFUSED")));
+    const r2 = await saveProfile({ fetch: down.f, apiUrl: "http://api" }, input);
+    expect(r2.content[0]!.text).toBe("save_profile failed: ECONNREFUSED");
+    const shape = fakeFetch(() => Response.json({ nope: true }));
+    expect((await saveProfile({ fetch: shape.f, apiUrl: "http://api" }, input)).isError).toBe(true);
   });
 });
 

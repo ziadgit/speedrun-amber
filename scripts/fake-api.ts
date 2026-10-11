@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SaveJobInput, SaveVariantInput, type Profile } from "../src/mcp/schemas";
+import { Profile as ProfileSchema, SaveJobInput, SaveVariantInput, type Profile } from "../src/mcp/schemas";
 
 const TimeSavedInput = z.object({
   task: z.string(),
@@ -50,7 +50,11 @@ const PROFILE: Profile = {
 };
 
 /** In-memory stand-in for the FastAPI side of spec 02. Dev only. */
-export function createFakeApi(port = 8000) {
+export function createFakeApi(
+  port = 8000,
+  options: { emptyProfile?: boolean } = { emptyProfile: process.env.FAKE_API_EMPTY_PROFILE === "1" },
+) {
+  let profile: Profile | undefined = options.emptyProfile ? undefined : PROFILE;
   const jobs = new Map<string, unknown>();
   const variants: unknown[] = [];
   let totalSaved = 0;
@@ -76,7 +80,13 @@ export function createFakeApi(port = 8000) {
   async function route(req: Request, path: string): Promise<Response> {
     const key = `${req.method} ${path}`;
     if (key === "GET /health") return json({ ok: true });
-    if (key === "GET /profile") return json(PROFILE);
+    if (key === "GET /profile") return profile ? json(profile) : json({ detail: "no profile" }, 404);
+    if (key === "PUT /profile") {
+      const parsed = ProfileSchema.safeParse(await body(req));
+      if (!parsed.success) return json({ detail: parsed.error.issues }, 422);
+      profile = parsed.data;
+      return json(profile);
+    }
     if (key === "POST /jobs") {
       const parsed = SaveJobInput.safeParse(await body(req));
       if (!parsed.success) return json({ detail: parsed.error.issues }, 422);

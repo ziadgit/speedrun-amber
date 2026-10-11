@@ -3,6 +3,8 @@ import {
   Job,
   LogTimeSavedInput as LogTimeSavedSchema,
   Profile,
+  ProfileInput as ProfileInputSchema,
+  type ProfileInput,
   SaveJobInput as SaveJobSchema,
   SaveVariantInput as SaveVariantSchema,
   SaveJobInput,
@@ -55,7 +57,7 @@ function fail(tool: string, detail: string): ToolResult {
 async function callApi<T>(
   tool: string,
   deps: ToolDeps,
-  method: "GET" | "POST",
+  method: "GET" | "POST" | "PUT",
   path: string,
   schema: z.ZodType<T>,
   body?: unknown,
@@ -91,7 +93,19 @@ async function callApi<T>(
 }
 
 export function getProfile(deps: ToolDeps): Promise<ToolResult> {
-  return callApi("get_profile", deps, "GET", "/profile", Profile);
+  return callApi(
+    "get_profile",
+    deps,
+    "GET",
+    "/profile",
+    Profile,
+    undefined,
+    "no profile yet; ask the user to upload their CV",
+  );
+}
+
+export function saveProfile(deps: ToolDeps, input: ProfileInput): Promise<ToolResult> {
+  return callApi("save_profile", deps, "PUT", "/profile", Profile, input);
 }
 
 export function saveVariant(deps: ToolDeps, input: SaveVariantInput): Promise<ToolResult> {
@@ -272,6 +286,13 @@ export const TOOLS: ToolDef[] = [
       "Save a CV variant tailored to a saved job. Each bullet must cite the source_id of the profile role or project it was rewritten from. Do not invent experience.",
     inputShape: SaveVariantSchema.shape,
     run: saveVariant,
+  },
+  {
+    name: "save_profile",
+    description:
+      "Replace the user's master CV profile. Only call this after the user has confirmed the summary you showed them. Copy facts from the CV exactly; never add anything that is not in it.",
+    inputShape: ProfileInputSchema.shape,
+    run: saveProfile,
   },
   {
     name: "log_time_saved",

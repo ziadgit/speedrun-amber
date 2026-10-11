@@ -60,3 +60,36 @@ test("round trip: MCP client -> /mcp -> fake API", async () => {
     server.stop(true);
   }
 });
+
+test("PUT /profile validates, stores and returns; empty start is 404 until a PUT", async () => {
+  const empty = createFakeApi(0, { emptyProfile: true });
+  const eb = `http://127.0.0.1:${empty.port}`;
+  const config = loadConfig({ PORT: "0", API_URL: eb });
+  const server = createServer(config, { mcp: createMcpHandler(config) });
+  const client = new Client({ name: "test", version: "0.0.0" });
+  await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${server.port}/mcp`)));
+  try {
+    const put = (body: unknown) =>
+      fetch(`${eb}/profile`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    expect((await put({ name: "x" })).status).toBe(422);
+    const before = await client.callTool({ name: "get_profile", arguments: {} });
+    expect(before.isError).toBe(true);
+    expect((before.content as { text: string }[])[0]!.text).toBe(
+      "get_profile failed: no profile yet; ask the user to upload their CV",
+    );
+    const cv = {
+      name: "Grace",
+      headline: "Compiler engineer",
+      roles: [{ id: "role-1", title: "Eng", company: "Navy", start: "1944-01-01", end: null, bullets: ["Wrote A-0"] }],
+      projects: [],
+    };
+    const saved = await client.callTool({ name: "save_profile", arguments: cv });
+    expect(saved.isError).toBeFalsy();
+    const after = await client.callTool({ name: "get_profile", arguments: {} });
+    expect(after.structuredContent).toEqual(cv);
+  } finally {
+    await client.close();
+    server.stop(true);
+    empty.stop(true);
+  }
+});

@@ -38,7 +38,7 @@ fake-api log. The loop does not run this; it needs a human and a paid key.
 - `src/darwin.ts` — `createDarwinProvider` (`mcpClients` entry, `search` only; union-schema tools break Anthropic). `src/runtime.ts` — `createCopilotHandler(config)`; `src/instructions.ts` — system prompt.
 - `src/mcp/` — `tools.ts` (one fn per tool + TOOLS table), `schemas.ts` (zod), `server.ts` (MCP handler).
 - `src/chat/` — `index.html`, `main.tsx`, `messages.ts` (pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
-- `scripts/` — `fake-api.ts`, `darwin-probe.ts`. Live network allowed here only.
+- `scripts/` — `fake-api.ts` (`FAKE_API_EMPTY_PROFILE=1` starts with no profile), `darwin-probe.ts`. Live network allowed here only.
 
 ## Gotchas
 - Library APIs in specs are unverified (written from docs, never run). When the
