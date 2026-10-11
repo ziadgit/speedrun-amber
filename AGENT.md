@@ -24,7 +24,6 @@ append duplicates. It is read on every loop, so length costs every loop.
 - `bun run build` — bundles the chat page to `dist/chat`
 
 Verify order (one subagent): typecheck → test → build.
-(`build` fails until the chat page item lands: no `src/chat/index.html` yet.)
 
 ## Live smoke (manual, needs a model key in `.env`)
 `bun run fake-api` and `bun run dev` in two shells, open
@@ -37,7 +36,7 @@ fake-api log. The loop does not run this; it needs a human and a paid key.
 - `src/server.ts` — `createServer(config, deps?)`, path-prefix dispatch.
 - `src/runtime.ts` — `createCopilotHandler(config)`; `src/instructions.ts` — system prompt.
 - `src/mcp/` — `tools.ts` (one fn per tool + TOOLS table), `schemas.ts` (zod), `server.ts` (MCP handler).
-- `src/chat/` — `index.html`, `main.tsx`, `messages.ts` (pure, tested).
+- `src/chat/` — `index.html`, `main.tsx`, `messages.ts` (pure, tested), `server.ts` (`createChatHandler`: `Bun.build` on first request with `publicPath: "/chat/"`, assets held in memory, CSP on every response).
 - `scripts/` — `fake-api.ts`, `darwin-probe.ts`. Live network allowed here only.
 
 ## Gotchas
@@ -50,3 +49,4 @@ fake-api log. The loop does not run this; it needs a human and a paid key.
 - Tests bind servers to port 0 and read the real port back from `server.port`.
   Always `server.stop(true)` in `afterAll`.
 - `BuiltInAgent` takes the system prompt as `prompt`. `GET /api/copilotkit/info` is the no-model health check. `src/server.ts` main builds the copilot handler lazily so `server.port` is known.
+- Chat page: `CopilotKitProvider` + `CopilotChat` (`agentId="default"`) from `@copilotkit/react-core/v2`; CSS from `@copilotkit/react-core/v2/styles.css` (typed by `src/chat/css.d.ts`). Bun's HTML bundle emits `./x.js` relative URLs, which break under `/chat` (no trailing slash), hence `publicPath`.

@@ -30,7 +30,7 @@ page tells its parent frame what changed.
 
 ### Chat page — 🧠 xhigh
 - [x] P0 `src/chat/messages.ts` (`resourceForTool`, `changedMessage`) + tests (spec 04)
-- [ ] P0 Serve `/chat` (React + CopilotKit chat), `/chat/config.json`, CSP `frame-ancestors` on every `/chat*` response; server test; `bun run build` passes (spec 04)
+- [x] P0 Serve `/chat` (React + CopilotKit chat), `/chat/config.json`, CSP `frame-ancestors` on every `/chat*` response; server test; `bun run build` passes (spec 04)
 - [ ] P0 Post `speedhack:changed` to `appOrigin` once per successful cv-tools call, using the installed react-core API; record the hook used in `AGENT.md` (spec 04)
 
 ### Job boards fallback — ⚡ high

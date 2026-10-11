@@ -1,4 +1,5 @@
 import { loadConfig, type Config } from "./config";
+import { createChatHandler } from "./chat/server";
 import { createMcpHandler } from "./mcp/server";
 import { createCopilotHandler } from "./runtime";
 
@@ -33,6 +34,7 @@ if (import.meta.main) {
   let copilot: Handler | undefined;
   const server: ReturnType<typeof createServer> = createServer(config, {
     mcp: createMcpHandler(config),
+    chat: createChatHandler(config),
     copilot: (req) => (copilot ??= createCopilotHandler(config, server.port))(req),
   });
   console.log(`chat:    ${server.url}chat`);
