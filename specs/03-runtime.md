@@ -19,6 +19,35 @@ truth**: if names or option shapes differ (e.g. how instructions or the model
 string are passed, whether the handler is a fetch handler), follow the real API
 and fix this spec and the overview in the same loop.
 
+## Darwin tools: `search` only
+Live run on 2026-10-11 failed with RUN_ERROR: "tools.3.custom.input_schema:
+input_schema does not support oneOf, allOf, or anyOf at the top level". Darwin's
+MCP server exposes 16 tools; `show_darwin_view` (top-level `oneOf`), `act`
+(`anyOf`) and `start_thread` (`oneOf`) have union schemas that Anthropic rejects,
+which fails every run. The agent only needs `search` (IDEA.md: `act` and the rest
+are out of scope).
+
+- Darwin moves from `mcpServers` to `mcpClients`. `mcpClients` entries need only
+  `tools(): Promise<ToolSet>` (`MCPClientProvider` in the installed `.d.ts`).
+  The `cv` entry stays in `mcpServers`, unchanged.
+- `src/darwin.ts` exports `DARWIN_TOOLS = ["search"] as const` and
+  `createDarwinProvider(url, deps?)`. Its `tools()` lazily creates one client with
+  `createMCPClient` from `@ai-sdk/mcp` (HTTP transport to `url`), keeps it for
+  later runs, and returns only the tools named in `DARWIN_TOOLS`. If client
+  creation or `tools()` throws, it drops the cached client (so the next run
+  reconnects) and returns `{}`, logging one line, so a Darwin outage never fails a
+  run that does not need it. `deps.createClient` is injectable for tests.
+- Add `@ai-sdk/mcp` as a direct dependency, same major as the copy
+  `@copilotkit/runtime` uses (1.x), so there is one `ToolSet` type.
+- The runtime names `mcpClients` tools only on collision (prefix `mcp<N>`); Darwin's
+  `search` collides with nothing, so the model sees `search`. Instructions already
+  say "search".
+- Tests (no network): a fake client offering `search`, `act` and
+  `show_darwin_view` yields only `search`; a throwing client yields `{}` and the
+  next call retries creation. Plus a guard test: every cv-tools tool's
+  `inputSchema` from `listTools()` is `type: "object"` with no top-level `oneOf`,
+  `anyOf` or `allOf`.
+
 ## Model
 Live run on 2026-10-11 failed with RUN_ERROR: "This API key is not scoped to a
 workspace, so this request must include the anthropic-workspace-id header".
