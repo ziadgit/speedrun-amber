@@ -44,3 +44,9 @@ page tells its parent frame what changed.
 ### Live-run fixes 2026-10-11 — 🧠 xhigh
 - [x] P0 Expose only Darwin's `search` to the agent via an `mcpClients` provider in `src/darwin.ts`; schema guard test for cv-tools (spec 03 "Darwin tools: `search` only")
 - [x] P2 Send `anthropic-workspace-id` when `ANTHROPIC_WORKSPACE_ID` is set: config field, `@ai-sdk/anthropic` direct dep, `agentModel()` in `runtime.ts`, header test with injected fetch, `.env.example` line (spec 03 "Model", spec 01 Config)
+
+### CV upload 2026-10-11 — 🧠 xhigh
+- [ ] P0 `save_profile` tool (`PUT /profile`), `get_profile` 404 → "no profile yet" error, fake API `PUT /profile` + empty-profile option, tests incl. the empty → save → get round trip (spec 07, spec 02, spec 05)
+- [ ] P0 Instructions: the three CV-upload lines verbatim + test (spec 07 Instructions)
+- [ ] P0 Chat attachments: `src/chat/attachments.ts` config (PDF/TXT/MD, 5 MB, inline error), passed to `CopilotChat`; `resourceForTool("save_profile")` → `"profile"`; tests; Live smoke step in `AGENT.md` (spec 07 Chat page)
+- [ ] P2 DOCX: convert in the browser with `mammoth` in `onUpload`, fixture test (spec 07 P2)

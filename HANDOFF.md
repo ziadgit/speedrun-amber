@@ -13,6 +13,7 @@ Plain in-memory storage, no model calls. One test each in `backend/tests/test_ma
 | `GET /profile` | none | `Profile` |
 | `POST /jobs` | `{title, company, description, url?}` | `Job` (with `id`, `created_at`) |
 | `POST /cv/variants` | `{job_id, bullets: [{source_id, text}]}` | `Variant`; 404 if `job_id` unknown |
+| `PUT /profile` | a full `Profile` | the stored `Profile`; replaces the old one. `GET /profile` returns 404 until one exists (spec 07) |
 | `POST /time-saved` | `{task, seconds_taken, baseline_seconds}` | `{total_seconds_saved, entries}` |
 
 Full shapes are in `specs/02-cv-tools.md`. The SvelteKit page will also want
@@ -26,7 +27,7 @@ Default `http://localhost:4000`, declared next to `API_URL`.
 - An iframe of `AGENT_URL/chat`.
 - A `message` listener that ignores anything whose `event.origin` is not the
   origin of `AGENT_URL`, then for `{type: "speedhack:changed", resource}` calls
-  `.refresh()` on the matching query (`jobs`, `variants`, `time-saved`).
+  `.refresh()` on the matching query (`profile`, `jobs`, `variants`, `time-saved`).
 - The agent server only allows framing from `APP_ORIGIN` (default
   `http://localhost:5173`), so set that on the agent side if the app runs elsewhere.
 
@@ -34,4 +35,7 @@ Default `http://localhost:4000`, declared next to `API_URL`.
 - This breaks the README's "the browser only ever talks to SvelteKit" rule: the
   browser also loads the agent server, which must be public when deployed.
   FastAPI stays private.
-- Who supplies the master profile (typed in, uploaded CV, other) is still open.
+- The master profile comes from a CV the user attaches in the chat (spec 07). The
+  agent saves it with `PUT /profile` after the user confirms a summary.
+- `save_job` stores whatever `url` the agent passes, including `javascript:`.
+  Check the scheme is `http`/`https` before rendering a job URL as a link.

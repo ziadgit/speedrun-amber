@@ -26,6 +26,7 @@ zod; extra fields are allowed and passed through.
 | `get_profile` | `GET /profile` | `{}` | `Profile` |
 | `save_job` | `POST /jobs` body `{title, company, description, url?}` | same | `Job` |
 | `save_variant` | `POST /cv/variants` body `{job_id, bullets}` | `{job_id: string, bullets: Bullet[] (min 1)}` | `Variant` |
+| `save_profile` | `PUT /profile` body = input | `Profile` | `Profile` (spec 07) |
 | `log_time_saved` | `POST /time-saved` body `{task, seconds_taken, baseline_seconds}` | `{task: TaskName}` | `TimeSaved` |
 
 Tool descriptions (the model reads these, keep them exact in spirit):
