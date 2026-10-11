@@ -1,0 +1,51 @@
+# AGENT.md — how to work in amber (speedhack-agent)
+
+amber is the agent side of the speedhack CV app: CopilotKit runtime + cv-tools
+MCP server + React chat page, one Bun process on :4000. Read `IDEA.md` (north
+star, seven invariants) and `specs/00-overview.md` first.
+
+**Keep this file short (≤ 150 lines).** Edit in place. Replace stale notes; don't
+append duplicates. It is read on every loop, so length costs every loop.
+
+## Stack
+- Bun 1.3+ (dev machine: Bun 1.3.11, Node 25) · TypeScript strict · React ·
+  `@copilotkit/runtime/v2` · `@copilotkit/react-core/v2` ·
+  `@modelcontextprotocol/sdk` · zod. Tests: `bun test`.
+- The main app lives in another repo (`sinaatalay/speedhack`). Never edit it;
+  contract changes go into `specs/02-cv-tools.md` + `HANDOFF.md`.
+
+## Commands (spec 01 defines them; these are the contract)
+- `bun install` — deps
+- `bun run dev` — server with hot reload on :4000 (`/chat`, `/mcp`, `/api/copilotkit`, `/health`)
+- `bun run fake-api` — in-memory FastAPI stand-in on :8000
+- `bun run darwin-probe` — one live Darwin search (network; never in tests)
+- `bun run typecheck` — `tsc --noEmit`
+- `bun test` — unit + in-process server tests, no live network
+- `bun run build` — bundles the chat page to `dist/chat`
+
+Verify order (one subagent): typecheck → test → build.
+(Before the scaffold item lands, verify only what exists.)
+
+## Live smoke (manual, needs a model key in `.env`)
+`bun run fake-api` and `bun run dev` in two shells, open
+`http://localhost:4000/chat`, ask "tailor my CV for a backend role at Acme".
+Expect `get_profile`, `save_job`, `save_variant`, `log_time_saved` in the
+fake-api log. The loop does not run this; it needs a human and a paid key.
+
+## Layout
+- `src/config.ts` — `loadConfig(env)`, the only env reader.
+- `src/server.ts` — `createServer(config, deps?)`, path-prefix dispatch.
+- `src/runtime.ts` — `createCopilotHandler(config)`; `src/instructions.ts` — system prompt.
+- `src/mcp/` — `tools.ts` (one fn per tool + TOOLS table), `schemas.ts` (zod), `server.ts` (MCP handler).
+- `src/chat/` — `index.html`, `main.tsx`, `messages.ts` (pure, tested).
+- `scripts/` — `fake-api.ts`, `darwin-probe.ts`. Live network allowed here only.
+
+## Gotchas
+- Library APIs in specs are unverified (written from docs, never run). When the
+  installed `.d.ts` disagrees, the `.d.ts` wins: follow it and fix the spec in
+  the same loop.
+- MCP SDK under Bun: prefer a web-standard (Request/Response) Streamable HTTP
+  transport if the installed SDK has one; the Node `req/res` transport needs an
+  adapter. Record what you used here.
+- Tests bind servers to port 0 and read the real port back from `server.port`.
+  Always `server.stop(true)` in `afterAll`.
