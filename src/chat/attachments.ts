@@ -13,14 +13,26 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-/** Anthropic reads PDF and text but not DOCX, so DOCX becomes plain text here; other files travel inline as base64. */
+export const UNSUPPORTED_MESSAGE = "Please attach your CV as a PDF, Word (.docx), Markdown or text file";
+
+/** Anthropic accepts only PDF and plain text documents, so every file is judged by extension, then type, and sent as one of those. */
+function cvMimeType(file: File): "application/pdf" | "text/plain" | "docx" {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".pdf") || file.type === "application/pdf") return "application/pdf";
+  if (name.endsWith(".docx") || file.type === DOCX_MIME) return "docx";
+  if (/\.(md|markdown|txt)$/.test(name) || file.type.startsWith("text/")) return "text/plain";
+  throw new Error(UNSUPPORTED_MESSAGE);
+}
+
+/** DOCX becomes plain text here (Anthropic reads no DOCX); PDF and text travel inline as base64 with a normalized MIME type. */
 export async function onUpload(file: File): Promise<AttachmentUploadResult> {
+  const kind = cvMimeType(file);
   const buffer = await file.arrayBuffer();
-  if (file.name.toLowerCase().endsWith(".docx") || file.type === DOCX_MIME) {
+  if (kind === "docx") {
     const { value } = await mammoth.extractRawText({ arrayBuffer: buffer });
     return { type: "data", value: toBase64(new TextEncoder().encode(value.trim())), mimeType: "text/plain", metadata: { filename: file.name } };
   }
-  return { type: "data", value: toBase64(new Uint8Array(buffer)), mimeType: file.type || "application/octet-stream", metadata: { filename: file.name } };
+  return { type: "data", value: toBase64(new Uint8Array(buffer)), mimeType: kind, metadata: { filename: file.name } };
 }
 
 /** CV upload config for `CopilotChat`; `onError` shows the message inline in the page. */

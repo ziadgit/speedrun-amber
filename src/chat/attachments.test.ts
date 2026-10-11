@@ -37,3 +37,21 @@ test("other files pass through unchanged as base64", async () => {
   const result = await onUpload(new File([bytes], "cv.pdf", { type: "application/pdf" }));
   expect(result).toEqual({ type: "data", value: btoa(String.fromCharCode(...bytes)), mimeType: "application/pdf", metadata: { filename: "cv.pdf" } });
 });
+
+test("markdown files are sent as text/plain whatever the browser reports", async () => {
+  for (const type of ["", "text/markdown"]) {
+    const result = await onUpload(new File(["# Ada"], "cv.md", { type }));
+    expect(result).toEqual({ type: "data", value: btoa("# Ada"), mimeType: "text/plain", metadata: { filename: "cv.md" } });
+  }
+});
+
+test("an upper-case .PDF with an empty type is sent as application/pdf", async () => {
+  const result = await onUpload(new File(["%PDF"], "cv.PDF", { type: "" }));
+  expect(result).toMatchObject({ mimeType: "application/pdf" });
+});
+
+test("other file types are rejected with a clear message", async () => {
+  await expect(onUpload(new File(["x"], "cv.png", { type: "image/png" }))).rejects.toThrow(
+    "Please attach your CV as a PDF, Word (.docx), Markdown or text file",
+  );
+});
