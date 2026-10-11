@@ -43,6 +43,11 @@ describe("jobCards", () => {
       { jobKey: "k2", title: "Bad", company: "Evil", location: null, scorePct: 100, salary: null, url: null },
     ]);
   });
+  test("jobCards keeps matches without a company", () => {
+    const cards = jobCards({ items: [{ job_key: "k1", title: "Backend Engineer", company: null, score: 0.9 }, { job_key: "k2", title: "SRE", company: "Acme", score: 0.8 }] });
+    expect(cards.map((c) => [c.jobKey, c.company])).toEqual([["k1", null], ["k2", "Acme"]]);
+    expect(tailorMessage(cards[0]!)).toBe("Tailor my CV for Backend Engineer (job_key k1)");
+  });
   test("jobCards ignores search_jobs rows", () => {
     expect(jobCards({ jobs: [{ id: "greenhouse:acme:123", title: "Backend Engineer", company: "Acme" }] })).toEqual([]);
     expect(jobCards({ items: [{ id: "greenhouse:acme:123", title: "Backend Engineer", company: "Acme" }] })).toEqual([]);

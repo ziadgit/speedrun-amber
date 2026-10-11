@@ -94,7 +94,7 @@ const cardStyle = { border: "1px solid #e5e7eb", borderRadius: 8, padding: 10, m
 function JobCardView({ card, onTailor }: { card: JobCard; onTailor: (card: JobCard) => void }) {
   return (
     <div style={cardStyle}>
-      <strong>{card.title}</strong> · {card.company}
+      <strong>{card.title}</strong>{card.company ? ` · ${card.company}` : ""}
       {card.scorePct !== null && <span> · {card.scorePct}% match</span>}
       <div style={{ color: "#4b5563" }}>{[card.location, card.salary].filter(Boolean).join(" · ")}</div>
       <div style={{ display: "flex", gap: 12, marginTop: 6 }}>

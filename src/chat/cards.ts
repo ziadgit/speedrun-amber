@@ -3,7 +3,7 @@
 export interface JobCard {
   jobKey: string;
   title: string;
-  company: string;
+  company: string | null;
   location: string | null;
   scorePct: number | null;
   salary: string | null;
@@ -84,7 +84,7 @@ export function jobCards(payload: unknown): JobCard[] {
     const jobKey = str(row.job_key);
     const title = str(row.title);
     const company = str(row.company);
-    if (!jobKey || !title || !company) continue;
+    if (!jobKey || !title) continue;
     const locations = Array.isArray(row.locations) ? row.locations.filter((l): l is string => typeof l === "string") : [];
     const score = num(row.score);
     cards.push({
@@ -112,7 +112,7 @@ export function tailoredCard(payload: unknown, appOrigin: string): TailoredCard 
 
 /** The chat message the "Tailor my CV" button sends. */
 export function tailorMessage(card: Pick<JobCard, "title" | "company" | "jobKey">): string {
-  return `Tailor my CV for ${card.title} at ${card.company} (job_key ${card.jobKey})`;
+  return `Tailor my CV for ${card.title}${card.company ? ` at ${card.company}` : ""} (job_key ${card.jobKey})`;
 }
 
 /** Empty-state suggestion pills (spec 08 "Empty-state suggestions"). */
