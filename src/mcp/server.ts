@@ -11,7 +11,7 @@ export interface McpDeps extends Partial<ToolDeps> {
 
 /**
  * Stateless Streamable HTTP handler: a fresh McpServer and transport per
- * request. "Session start" for log_time_saved is the handler's first tool call.
+ * request. The task start for log_time_saved is the first tool call since server start or the previous log_time_saved.
  */
 export function createMcpHandler(config: Pick<Config, "apiUrl">, deps: McpDeps = {}): Handler {
   const fetchFn = deps.fetch ?? fetch;
@@ -26,7 +26,10 @@ export function createMcpHandler(config: Pick<Config, "apiUrl">, deps: McpDeps =
         { description: tool.description, inputSchema: tool.inputShape },
         async (input: unknown) => {
           startedAt ??= now();
-          return tool.run({ fetch: fetchFn, apiUrl: config.apiUrl, now, startedAt }, input);
+          const deps = { fetch: fetchFn, apiUrl: config.apiUrl, now, startedAt };
+          // Success or failure, logging ends the task; the next call starts a new one.
+          if (tool.name === "log_time_saved") startedAt = undefined;
+          return tool.run(deps, input);
         },
       );
     }

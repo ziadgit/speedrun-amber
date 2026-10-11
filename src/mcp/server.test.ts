@@ -46,3 +46,30 @@ test("invalid input is rejected without calling the API", async () => {
   expect(calls.length).toBe(before);
   await client.close();
 });
+
+test("log_time_saved measures from the first call of each task, not server start", async () => {
+  const bodies: { seconds_taken: number }[] = [];
+  const timeFetch = (async (url: string, init?: RequestInit) => {
+    if (String(url).endsWith("/time-saved")) bodies.push(JSON.parse(String(init?.body)));
+    return Response.json({ name: "Ada", headline: "Eng", roles: [], projects: [], id: "t1", seconds_saved: 1 });
+  }) as unknown as typeof fetch;
+  let t = 0;
+  const cfg = loadConfig({ PORT: "0", API_URL: "http://api.test" });
+  const srv = createServer(cfg, { mcp: createMcpHandler(cfg, { fetch: timeFetch, now: () => t }) });
+  try {
+    const client = new Client({ name: "test", version: "0.0.0" });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${srv.port}/mcp`)));
+    const log = () => client.callTool({ name: "log_time_saved", arguments: { task: "find_jobs" } });
+    await client.callTool({ name: "get_profile", arguments: {} });
+    t = 60_000;
+    await log();
+    t = 3_600_000;
+    await client.callTool({ name: "get_profile", arguments: {} });
+    t = 3_630_000;
+    await log();
+    expect(bodies.map((b) => b.seconds_taken)).toEqual([60, 30]);
+    await client.close();
+  } finally {
+    srv.stop(true);
+  }
+});
