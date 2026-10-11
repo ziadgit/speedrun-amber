@@ -47,4 +47,4 @@ page tells its parent frame what changed.
 
 ### CV upload fixes 2026-10-11 — ⚡ high
 - [x] P0 `onUpload` normalizes MIME types to `application/pdf` or `text/plain` and rejects other files with a clear message; tests for `.md` with empty and `text/markdown` types, `.PDF` with empty type, `.png` (spec 07 "MIME types sent to the model")
-- [ ] P2 `AGENT.md`: note that `PORT` may need to differ from 4000 (on the dev Mac 4000 is NoMachine; `.env` uses 4001) and use `localhost:$PORT` in Live smoke (spec 01 Config)
+- [x] P2 `AGENT.md`: note that `PORT` may need to differ from 4000 (on the dev Mac 4000 is NoMachine; `.env` uses 4001) and use `localhost:$PORT` in Live smoke (spec 01 Config)

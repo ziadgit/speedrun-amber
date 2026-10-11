@@ -16,7 +16,7 @@ append duplicates. It is read on every loop, so length costs every loop.
 
 ## Commands (spec 01 defines them; these are the contract)
 - `bun install` — deps
-- `bun run dev` — server with hot reload on :4000 (`/chat`, `/mcp`, `/api/copilotkit`, `/health`)
+- `bun run dev` — server with hot reload on `PORT` (default 4000; the dev Mac's :4000 is NoMachine, so `.env` sets `PORT=4001`) (`/chat`, `/mcp`, `/api/copilotkit`, `/health`)
 - `bun run fake-api` — in-memory FastAPI stand-in on :8000
 - `bun run darwin-probe` — one live Darwin search (network; never in tests)
 - `bun run boards-probe` — one live fetch per job board (network; never in tests)
@@ -28,7 +28,7 @@ Verify order (one subagent): typecheck → test → build.
 
 ## Live smoke (manual, needs a model key in `.env`)
 `bun run fake-api` and `bun run dev` in two shells, open
-`http://localhost:4000/chat`, ask "tailor my CV for a backend role at Acme".
+`http://localhost:$PORT/chat`, ask "tailor my CV for a backend role at Acme".
 Expect `get_profile`, `save_job`, `save_variant`, `log_time_saved` in the
 fake-api log. The loop does not run this; it needs a human and a paid key.
 
