@@ -5,7 +5,7 @@ separate session in that repo) makes these three changes. The REST contract is
 `specs/02-cv-tools.md`; until the real routes exist, `bun run fake-api` stands
 in for them.
 
-## 1. Four FastAPI routes in `backend/src/backend/main.py`
+## 1. Five FastAPI routes in `backend/src/backend/main.py`
 Plain in-memory storage, no model calls. One test each in `backend/tests/test_main.py`.
 
 | Route | Body | Returns |
