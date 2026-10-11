@@ -15,7 +15,7 @@ export function loadConfig(env: Env = process.env): Config {
     model: env.MODEL || undefined,
     darwinMcpUrl: env.DARWIN_MCP_URL || "https://mcp.darwin.so/mcp",
     appOrigin: parseOrigin(env.APP_ORIGIN || "http://localhost:5173"),
-    port: parsePort(env.PORT ?? "4000"),
+    port: parsePort(env.PORT || "4000"),
   };
 }
 

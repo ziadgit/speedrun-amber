@@ -43,3 +43,7 @@ test("normalizes default ports and case in APP_ORIGIN", () => {
     expect(loadConfig({ APP_ORIGIN: input }).appOrigin).toBe(want);
   }
 });
+
+test("empty PORT falls back to 4000", () => {
+  expect(loadConfig({ PORT: "" }).port).toBe(4000);
+});
