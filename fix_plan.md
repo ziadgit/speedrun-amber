@@ -34,4 +34,4 @@ page tells its parent frame what changed.
 - [x] P0 Post `speedhack:changed` to `appOrigin` once per successful cv-tools call, using the installed react-core API; record the hook used in `AGENT.md` (spec 04)
 
 ## Discovered
-
+- [ ] P1 `search_jobs` greenhouse descriptions keep HTML entities: greenhouse `content` is HTML escaped once, so after `unescapeHtml` the HTML still holds `&amp;`, `&nbsp;`, `&#39;`, `&mdash;`. Probe: content `&lt;p&gt;R&amp;amp;D&amp;nbsp;team &amp;mdash; it&amp;#39;s great&lt;/p&gt;` returns description `R&amp;D&nbsp;team &mdash; it&#39;s great`, expected `R&D team — it's great`. Fix in `src/mcp/tools.ts`: strip tags first, then decode entities once (named `amp lt gt quot apos nbsp mdash ndash`, numeric `&#NN;` and `&#xHH;`; `&amp;` last so `&amp;lt;` stays `&lt;`). Add the probe as a test named "search_jobs greenhouse decodes entities inside the HTML" in `src/mcp/tools.test.ts` (spec 06 Response shapes)
