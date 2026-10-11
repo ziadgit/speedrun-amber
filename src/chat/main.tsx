@@ -115,10 +115,13 @@ function JobCardView({ card, onTailor }: { card: JobCard; onTailor: (card: JobCa
 function ToolCards({ appOrigin }: { appOrigin: string }) {
   const { agent } = useAgent({ agentId: "default" });
   const { copilotkit } = useCopilotKit();
-  const tailor = (card: JobCard) => {
+  // useRenderTool JSON.stringifies its deps, so agent/copilotkit (circular) can't be deps: read them through a ref.
+  const tailorRef = useRef<(card: JobCard) => void>(() => {});
+  tailorRef.current = (card: JobCard) => {
     agent.addMessage({ id: crypto.randomUUID(), role: "user", content: tailorMessage(card) });
     void copilotkit.runAgent({ agent });
   };
+  const tailor = (card: JobCard) => tailorRef.current(card);
   useRenderTool(
     {
       name: "*",
@@ -156,7 +159,7 @@ function ToolCards({ appOrigin }: { appOrigin: string }) {
         return null;
       },
     },
-    [agent, copilotkit, appOrigin],
+    [appOrigin],
   );
   return null;
 }
