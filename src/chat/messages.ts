@@ -21,3 +21,27 @@ export function resourceForTool(name: string): Resource | null {
 export function changedMessage(resource: Resource): ChangedMessage {
   return { type: "speedhack:changed", resource };
 }
+
+/** cv-tools report failures as text `<tool> failed: <detail>` (see tools.ts). */
+const FAILURE = /^\w+ failed: /;
+
+/**
+ * Posts `speedhack:changed` once per successful cv-tools call. Feed it the
+ * agent's tool-call start and result events; `post` is injected so the
+ * caller owns `targetOrigin` and the framed-or-not check.
+ */
+export function createChangeTracker(post: (message: ChangedMessage) => void) {
+  const names = new Map<string, string>();
+  const done = new Set<string>();
+  return {
+    started(toolCallId: string, toolCallName: string) {
+      names.set(toolCallId, toolCallName);
+    },
+    result(toolCallId: string, content: string | unknown[]) {
+      if (done.has(toolCallId)) return;
+      done.add(toolCallId);
+      const resource = resourceForTool(names.get(toolCallId) ?? "");
+      if (resource && !FAILURE.test((typeof content === "string" ? content : JSON.stringify(content)).trim())) post(changedMessage(resource));
+    },
+  };
+}

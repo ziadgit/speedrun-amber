@@ -1,11 +1,34 @@
-import { CopilotChat, CopilotKitProvider } from "@copilotkit/react-core/v2";
+import { CopilotChat, CopilotKitProvider, useAgent } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
+import { useEffect } from "react";
 import { createRoot } from "react-dom/client";
+import { createChangeTracker } from "./messages";
 
-createRoot(document.getElementById("root")!).render(
-  <CopilotKitProvider runtimeUrl="/api/copilotkit">
-    <div style={{ height: "100%" }}>
-      <CopilotChat agentId="default" />
-    </div>
-  </CopilotKitProvider>,
-);
+/** Tells the embedding app which resource changed, only ever to appOrigin. */
+function ChangeNotifier({ appOrigin }: { appOrigin: string }) {
+  const { agent } = useAgent({ agentId: "default" });
+  useEffect(() => {
+    if (window.parent === window) return;
+    const tracker = createChangeTracker((message) => window.parent.postMessage(message, appOrigin));
+    const { unsubscribe } = agent.subscribe({
+      onToolCallStartEvent: ({ event }) => tracker.started(event.toolCallId, event.toolCallName),
+      onToolCallResultEvent: ({ event }) => tracker.result(event.toolCallId, event.content),
+    });
+    return unsubscribe;
+  }, [agent, appOrigin]);
+  return null;
+}
+
+function App({ appOrigin }: { appOrigin: string }) {
+  return (
+    <CopilotKitProvider runtimeUrl="/api/copilotkit">
+      <ChangeNotifier appOrigin={appOrigin} />
+      <div style={{ height: "100%" }}>
+        <CopilotChat agentId="default" />
+      </div>
+    </CopilotKitProvider>
+  );
+}
+
+const { appOrigin } = (await (await fetch("/chat/config.json")).json()) as { appOrigin: string };
+createRoot(document.getElementById("root")!).render(<App appOrigin={appOrigin} />);
