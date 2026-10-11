@@ -1,4 +1,4 @@
-export type Resource = "jobs" | "variants" | "time-saved";
+export type Resource = "jobs" | "variants" | "time-saved" | "profile";
 
 export interface ChangedMessage {
   type: "speedhack:changed";
@@ -9,6 +9,7 @@ const RESOURCES: Record<string, Resource> = {
   save_job: "jobs",
   save_variant: "variants",
   log_time_saved: "time-saved",
+  save_profile: "profile",
 };
 
 const PREFIX = /^cv(?:__|_|\.|\/)/;

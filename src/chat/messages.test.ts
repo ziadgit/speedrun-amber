@@ -7,6 +7,11 @@ test("maps the three write tools", () => {
   expect(resourceForTool("log_time_saved")).toBe("time-saved");
 });
 
+test("maps save_profile to profile", () => {
+  expect(resourceForTool("save_profile")).toBe("profile");
+  expect(resourceForTool("cv_save_profile")).toBe("profile");
+});
+
 test("strips one MCP prefix", () => {
   for (const p of ["cv_", "cv__", "cv.", "cv/"]) {
     expect(resourceForTool(`${p}save_job`)).toBe("jobs");

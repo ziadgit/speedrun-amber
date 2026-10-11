@@ -32,6 +32,8 @@ Verify order (one subagent): typecheck → test → build.
 Expect `get_profile`, `save_job`, `save_variant`, `log_time_saved` in the
 fake-api log. The loop does not run this; it needs a human and a paid key.
 
+Live smoke, CV upload: `FAKE_API_EMPTY_PROFILE=1 bun run fake-api`, attach a PDF CV in `/chat`, confirm the summary, expect `PUT /profile` in the fake-api log, then ask for a tailored CV.
+
 ## Layout
 - `src/config.ts` — `loadConfig(env)`, the only env reader.
 - `src/server.ts` — `createServer(config, deps?)`, path-prefix dispatch.

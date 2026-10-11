@@ -1,7 +1,8 @@
 import { CopilotChat, CopilotKitProvider, useAgent } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { createAttachments } from "./attachments";
 import { createChangeTracker } from "./messages";
 
 /** Tells the embedding app which resource changed, only ever to appOrigin. */
@@ -20,11 +21,25 @@ function ChangeNotifier({ appOrigin }: { appOrigin: string }) {
 }
 
 function App({ appOrigin }: { appOrigin: string }) {
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const attachments = useMemo(
+    () =>
+      createAttachments((message) => {
+        setUploadError(message);
+        setTimeout(() => setUploadError(null), 8000);
+      }),
+    [],
+  );
   return (
     <CopilotKitProvider runtimeUrl="/api/copilotkit">
       <ChangeNotifier appOrigin={appOrigin} />
       <div style={{ height: "100%" }}>
-        <CopilotChat agentId="default" />
+        {uploadError && (
+          <div role="alert" style={{ padding: "8px 12px", background: "#fee2e2", color: "#991b1b" }}>
+            {uploadError}
+          </div>
+        )}
+        <CopilotChat agentId="default" attachments={attachments} />
       </div>
     </CopilotKitProvider>
   );
