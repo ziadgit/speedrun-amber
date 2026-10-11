@@ -9,19 +9,27 @@ export interface ServerDeps {
   copilot?: Handler;
   mcp?: Handler;
   chat?: Handler;
+  /** Client address for a request; defaults to `server.requestIP`. Tests inject a remote one. */
+  clientIp?: (req: Request) => string | undefined;
 }
+
+const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 
 export function createServer(config: Config, deps: ServerDeps = {}) {
   return Bun.serve({
     port: config.port,
-    fetch(req) {
+    fetch(req, server) {
       const { pathname } = new URL(req.url);
       const under = (prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
       if (pathname === "/health" && req.method === "GET") return json({ status: "ok" });
       if (under("/api/copilotkit") && deps.copilot) return deps.copilot(req);
-      if (under("/mcp") && deps.mcp) return deps.mcp(req);
+      if (under("/mcp") && deps.mcp) {
+        const ip = deps.clientIp ? deps.clientIp(req) : server.requestIP(req)?.address;
+        if (!ip || !LOOPBACK.has(ip)) return json({ error: "forbidden" }, 403);
+        return deps.mcp(req);
+      }
       if (under("/chat") && deps.chat) return deps.chat(req);
       return json({ error: "not found" }, 404);
     },
