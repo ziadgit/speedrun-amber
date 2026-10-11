@@ -73,3 +73,14 @@ test("log_time_saved measures from the first call of each task, not server start
     srv.stop(true);
   }
 });
+
+test("every cv-tool inputSchema is a plain object with no top-level union", async () => {
+  const client = await connect();
+  const { tools } = await client.listTools();
+  for (const t of tools) {
+    const schema = t.inputSchema as Record<string, unknown>;
+    expect(schema.type).toBe("object");
+    for (const key of ["oneOf", "anyOf", "allOf"]) expect(schema[key]).toBeUndefined();
+  }
+  await client.close();
+});

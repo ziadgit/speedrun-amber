@@ -42,5 +42,5 @@ page tells its parent frame what changed.
 - [x] P2 Empty `PORT=` falls back to 4000 like the other variables; add the case to `config.test.ts` (spec 01 Config)
 
 ### Live-run fixes 2026-10-11 — 🧠 xhigh
-- [ ] P0 Expose only Darwin's `search` to the agent via an `mcpClients` provider in `src/darwin.ts`; schema guard test for cv-tools (spec 03 "Darwin tools: `search` only")
+- [x] P0 Expose only Darwin's `search` to the agent via an `mcpClients` provider in `src/darwin.ts`; schema guard test for cv-tools (spec 03 "Darwin tools: `search` only")
 - [ ] P2 Send `anthropic-workspace-id` when `ANTHROPIC_WORKSPACE_ID` is set: config field, `@ai-sdk/anthropic` direct dep, `agentModel()` in `runtime.ts`, header test with injected fetch, `.env.example` line (spec 03 "Model", spec 01 Config)
