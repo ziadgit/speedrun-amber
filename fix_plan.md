@@ -17,7 +17,7 @@ page tells its parent frame what changed.
 ## Backlog
 
 ### Foundation — ⚡ high
-- [ ] P0 Scaffold: `package.json` (scripts from spec 01), `tsconfig.json`, deps installed, `.env.example`, `src/config.ts` + tests, `src/server.ts` with `/health` and 404 + test on port 0 (spec 01)
+- [x] P0 Scaffold: `package.json` (scripts from spec 01), `tsconfig.json`, deps installed, `.env.example`, `src/config.ts` + tests, `src/server.ts` with `/health` and 404 + test on port 0 (spec 01)
 - [ ] P0 `scripts/darwin-probe.ts`: write it, run it once live, fill in "Probe result" in spec 05, then unblock or delete the `search_jobs` items below (spec 05)
 
 ### cv-tools — 🧠 xhigh

@@ -24,7 +24,7 @@ append duplicates. It is read on every loop, so length costs every loop.
 - `bun run build` — bundles the chat page to `dist/chat`
 
 Verify order (one subagent): typecheck → test → build.
-(Before the scaffold item lands, verify only what exists.)
+(`build` fails until the chat page item lands: no `src/chat/index.html` yet.)
 
 ## Live smoke (manual, needs a model key in `.env`)
 `bun run fake-api` and `bun run dev` in two shells, open
