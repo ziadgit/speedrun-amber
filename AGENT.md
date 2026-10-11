@@ -22,7 +22,7 @@ append duplicates. It is read on every loop, so length costs every loop.
 - `bun run boards-probe` — one live fetch per job board (network; never in tests)
 - `bun run typecheck` — `tsc --noEmit`
 - `bun test` — unit + in-process server tests, no live network
-- `bun run build` — bundles the chat page to `dist/chat`
+- `bun run build` — bundles the chat page (minified, ~17.3 MB js + 1.5 MB css) to `dist/chat`
 
 Verify order (one subagent): typecheck → test → build.
 

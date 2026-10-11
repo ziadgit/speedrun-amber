@@ -12,6 +12,7 @@ export function createChatHandler(config: Config): Handler {
     const result = await Bun.build({
       entrypoints: [new URL("./index.html", import.meta.url).pathname],
       publicPath: "/chat/",
+      minify: true,
     });
     if (!result.success) throw new Error(`chat bundle failed: ${result.logs.join("\n")}`);
     const map = new Map<string, Blob>();
