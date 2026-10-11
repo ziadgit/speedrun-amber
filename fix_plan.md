@@ -58,6 +58,6 @@ page tells its parent frame what changed.
 - [x] P0 Chat page résumé id: `?resume=` param, localStorage fallback, "Upload your CV to AviCV" button, agent context `avicv_resume_id` via the installed v2 hook (record it in `AGENT.md`); remove attachments, `attachments.ts`, mammoth and their tests (spec 08 "Chat page")
 - [x] P1 AviCV header strip: wordmark → `APP_ORIGIN`, catalog size, résumé chip → `page_url` with status/progress, time saved; polling rules; pure formatting helpers tested (spec 08 "AviCV header strip")
 - [x] P1 Tool-result cards: match cards with score %, Apply link, "Tailor my CV" button; tailored-CV card with Download PDF; use the installed v2 tool-call renderer (spec 08 "Tool results render as cards")
-- [ ] P1 `avicv:changed` rename and new `resourceForTool` mapping; tests (spec 08 "Change notifications")
+- [x] P1 `avicv:changed` rename and new `resourceForTool` mapping; tests (spec 08 "Change notifications")
 - [ ] P2 Empty-state suggestions and AviCV copy everywhere visible; page title "AviCV agent" (spec 08 Chat page)
 - [ ] P2 Docs: rewrite `HANDOFF.md` for AviCV (`AGENT_URL` in `frontend/src/env.ts`, iframe `${AGENT_URL}/chat?resume=${id}` on `routes/resumes/[id]/+page.svelte`, `avicv:changed` listener refreshing `watchResume`/time savings; no new backend routes needed); update `README.md` tools/config/diagram and `AGENT.md` layout/live smoke; `package.json` name `avicv-agent` (spec 08)

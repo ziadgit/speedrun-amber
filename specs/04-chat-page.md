@@ -20,11 +20,11 @@ component filling the viewport. Plain, readable styling; no design system.
 ## Telling the app what changed
 When a cv-tools call finishes successfully in the chat, the page posts:
 ```ts
-window.parent.postMessage({ type: "speedhack:changed", resource }, appOrigin);
+window.parent.postMessage({ type: "avicv:changed", resource }, appOrigin);
 ```
 `src/chat/messages.ts` is pure and unit-tested:
-- `resourceForTool(name)`: `save_job` → `"jobs"`, `save_variant` →
-  `"variants"`, `log_time_saved` → `"time-saved"`, anything else → `null`.
+- `resourceForTool(name)`: `tailor_cv`/`get_tailored_cv` →
+  `"tailored"`, `rematch` → `"resume"`, anything else → `null` (spec 08).
   Accepts MCP-prefixed names too: strip one leading `cv_`, `cv__`, `cv.` or
   `cv/` before the lookup (record the prefix the runtime really uses in `AGENT.md`).
 - `changedMessage(resource)` builds the object above.

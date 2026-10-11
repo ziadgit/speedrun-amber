@@ -1,15 +1,14 @@
-export type Resource = "jobs" | "variants" | "time-saved" | "profile";
+export type Resource = "tailored" | "resume";
 
 export interface ChangedMessage {
-  type: "speedhack:changed";
+  type: "avicv:changed";
   resource: Resource;
 }
 
 const RESOURCES: Record<string, Resource> = {
-  save_job: "jobs",
-  save_variant: "variants",
-  log_time_saved: "time-saved",
-  save_profile: "profile",
+  tailor_cv: "tailored",
+  get_tailored_cv: "tailored",
+  rematch: "resume",
 };
 
 const PREFIX = /^cv(?:__|_|\.|\/)/;
@@ -20,7 +19,7 @@ export function resourceForTool(name: string): Resource | null {
 }
 
 export function changedMessage(resource: Resource): ChangedMessage {
-  return { type: "speedhack:changed", resource };
+  return { type: "avicv:changed", resource };
 }
 
 /** cv-tools report failures as text `<tool> failed: <detail>` (see tools.ts). */
@@ -43,7 +42,7 @@ export function resultFailed(content: string | unknown[]): boolean {
 }
 
 /**
- * Posts `speedhack:changed` once per successful cv-tools call. Feed it the
+ * Posts `avicv:changed` once per successful cv-tools call. Feed it the
  * agent's tool-call start and result events; `post` is injected so the
  * caller owns `targetOrigin` and the framed-or-not check.
  */

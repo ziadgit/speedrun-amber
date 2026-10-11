@@ -1,37 +1,33 @@
 import { describe, expect, test } from "bun:test";
 import { changedMessage, createChangeTracker, resourceForTool } from "./messages";
 
-test("maps the three write tools", () => {
-  expect(resourceForTool("save_job")).toBe("jobs");
-  expect(resourceForTool("save_variant")).toBe("variants");
-  expect(resourceForTool("log_time_saved")).toBe("time-saved");
-});
-
-test("maps save_profile to profile", () => {
-  expect(resourceForTool("save_profile")).toBe("profile");
-  expect(resourceForTool("cv_save_profile")).toBe("profile");
+test("maps tailoring tools to tailored and rematch to resume", () => {
+  expect(resourceForTool("tailor_cv")).toBe("tailored");
+  expect(resourceForTool("get_tailored_cv")).toBe("tailored");
+  expect(resourceForTool("rematch")).toBe("resume");
+  expect(resourceForTool("cv_rematch")).toBe("resume");
 });
 
 test("strips one MCP prefix", () => {
   for (const p of ["cv_", "cv__", "cv.", "cv/"]) {
-    expect(resourceForTool(`${p}save_job`)).toBe("jobs");
+    expect(resourceForTool(`${p}tailor_cv`)).toBe("tailored");
   }
-  expect(resourceForTool("cv_cv_save_job")).toBeNull();
+  expect(resourceForTool("cv_cv_tailor_cv")).toBeNull();
 });
 
 test("other tools and inherited keys give null", () => {
-  expect(resourceForTool("get_profile")).toBeNull();
+  expect(resourceForTool("get_resume")).toBeNull();
   expect(resourceForTool("search")).toBeNull();
   expect(resourceForTool("toString")).toBeNull();
   expect(resourceForTool("")).toBeNull();
 });
 
 test("changedMessage shape", () => {
-  expect(changedMessage("jobs")).toEqual({ type: "speedhack:changed", resource: "jobs" });
+  expect(changedMessage("tailored")).toEqual({ type: "avicv:changed", resource: "tailored" });
 });
 
 const ok = JSON.stringify({ content: [{ type: "text", text: '{"id":"j1"}' }] });
-const fail = JSON.stringify({ content: [{ type: "text", text: "save_variant failed: 422" }], isError: true });
+const fail = JSON.stringify({ content: [{ type: "text", text: "get_tailored_cv failed: 422" }], isError: true });
 
 describe("createChangeTracker", () => {
   const setup = () => {
@@ -41,17 +37,17 @@ describe("createChangeTracker", () => {
 
   test("posts once per successful cv-tools call", () => {
     const { posted, tracker } = setup();
-    tracker.started("t1", "cv_save_job");
+    tracker.started("t1", "cv_tailor_cv");
     tracker.result("t1", ok);
     tracker.result("t1", ok);
-    expect(posted).toEqual([{ type: "speedhack:changed", resource: "jobs" }]);
+    expect(posted).toEqual([{ type: "avicv:changed", resource: "tailored" }]);
   });
 
   test("ignores failures, read tools and unknown calls", () => {
     const { posted, tracker } = setup();
-    tracker.started("t1", "save_variant");
+    tracker.started("t1", "get_tailored_cv");
     tracker.result("t1", fail);
-    tracker.started("t2", "get_profile");
+    tracker.started("t2", "get_resume");
     tracker.result("t2", ok);
     tracker.result("t3", ok);
     expect(posted).toEqual([]);
@@ -59,8 +55,8 @@ describe("createChangeTracker", () => {
 
   test("falls back to the failed-text prefix when content is not JSON", () => {
     const { posted, tracker } = setup();
-    tracker.started("t1", "save_job");
-    tracker.result("t1", "save_job failed: 500");
+    tracker.started("t1", "tailor_cv");
+    tracker.result("t1", "tailor_cv failed: 500");
     expect(posted).toEqual([]);
   });
 });
