@@ -4,6 +4,7 @@ export interface Config {
   darwinMcpUrl: string;
   appOrigin: string;
   port: number;
+  anthropicWorkspaceId: string | undefined;
 }
 
 type Env = Record<string, string | undefined>;
@@ -16,6 +17,7 @@ export function loadConfig(env: Env = process.env): Config {
     darwinMcpUrl: env.DARWIN_MCP_URL || "https://mcp.darwin.so/mcp",
     appOrigin: parseOrigin(env.APP_ORIGIN || "http://localhost:5173"),
     port: parsePort(env.PORT || "4000"),
+    anthropicWorkspaceId: env.ANTHROPIC_WORKSPACE_ID || undefined,
   };
 }
 

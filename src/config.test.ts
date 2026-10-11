@@ -8,7 +8,13 @@ test("defaults", () => {
     darwinMcpUrl: "https://mcp.darwin.so/mcp",
     appOrigin: "http://localhost:5173",
     port: 4000,
+    anthropicWorkspaceId: undefined,
   });
+});
+
+test("reads ANTHROPIC_WORKSPACE_ID, empty is unset", () => {
+  expect(loadConfig({ ANTHROPIC_WORKSPACE_ID: "wrkspc_1" }).anthropicWorkspaceId).toBe("wrkspc_1");
+  expect(loadConfig({ ANTHROPIC_WORKSPACE_ID: "" }).anthropicWorkspaceId).toBeUndefined();
 });
 
 test("strips trailing slash from API_URL", () => {

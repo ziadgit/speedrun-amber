@@ -5,6 +5,7 @@
     "": {
       "name": "amber",
       "dependencies": {
+        "@ai-sdk/anthropic": "^3.0.49",
         "@ai-sdk/mcp": "^1.0.92",
         "@copilotkit/react-core": "^1.78.0",
         "@copilotkit/runtime": "^1.78.0",
