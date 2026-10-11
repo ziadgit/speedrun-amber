@@ -26,7 +26,7 @@ page tells its parent frame what changed.
 - [x] P0 `src/mcp/server.ts` MCP handler mounted at `/mcp`; test connects SDK `Client` on port 0 and lists exactly the four tools (spec 02)
 
 ### Agent — 🧠 xhigh
-- [ ] P0 `src/instructions.ts` + `src/runtime.ts` (`createCopilotHandler`), mounted at `/api/copilotkit`; tests: missing `MODEL` error, Darwin rules verbatim, handler answers a no-model request (spec 03)
+- [x] P0 `src/instructions.ts` + `src/runtime.ts` (`createCopilotHandler`), mounted at `/api/copilotkit`; tests: missing `MODEL` error, Darwin rules verbatim, handler answers a no-model request (spec 03)
 
 ### Chat page — 🧠 xhigh
 - [ ] P0 `src/chat/messages.ts` (`resourceForTool`, `changedMessage`) + tests (spec 04)

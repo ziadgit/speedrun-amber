@@ -12,7 +12,9 @@
 `actualPort` is the port the server really bound (matters when `PORT=0`), so the
 server passes it in after `Bun.serve` starts, or builds the handler lazily.
 
-The overview's snippet is unverified. **The installed package's `.d.ts` is the
+Verified against the installed 1.78 `.d.ts`: the system prompt option is `prompt` (not `instructions`), `mcpServers` and `createCopilotRuntimeHandler({runtime, basePath})` match, the handler is a `(Request) => Promise<Response>`, and `GET /api/copilotkit/info` lists agents without a model call. `createCopilotHandler(config, port = config.port)` takes the bound port; `server.ts` builds it lazily on first request.
+
+The overview's snippet was unverified. **The installed package's `.d.ts` is the
 truth**: if names or option shapes differ (e.g. how instructions or the model
 string are passed, whether the handler is a fetch handler), follow the real API
 and fix this spec and the overview in the same loop.

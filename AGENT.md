@@ -49,3 +49,4 @@ fake-api log. The loop does not run this; it needs a human and a paid key.
   adapter. Used: `WebStandardStreamableHTTPServerTransport` (stateless, `enableJsonResponse`, new McpServer per request) in `src/mcp/server.ts`; tool table `TOOLS` lives in `tools.ts`.
 - Tests bind servers to port 0 and read the real port back from `server.port`.
   Always `server.stop(true)` in `afterAll`.
+- `BuiltInAgent` takes the system prompt as `prompt`. `GET /api/copilotkit/info` is the no-model health check. `src/server.ts` main builds the copilot handler lazily so `server.port` is known.
