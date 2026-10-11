@@ -21,7 +21,7 @@ page tells its parent frame what changed.
 - [ ] P0 `scripts/darwin-probe.ts`: write it, run it once live, fill in "Probe result" in spec 05, then unblock or delete the `search_jobs` items below (spec 05)
 
 ### cv-tools — 🧠 xhigh
-- [ ] P0 `src/mcp/schemas.ts` + `src/mcp/tools.ts` with `get_profile` and `save_variant`, fake-fetch tests incl. error paths (spec 02)
+- [x] P0 `src/mcp/schemas.ts` + `src/mcp/tools.ts` with `get_profile` and `save_variant`, fake-fetch tests incl. error paths (spec 02)
 - [ ] P0 `save_job` and `log_time_saved` (injected clock, fixed baselines) with tests (spec 02)
 - [ ] P0 `src/mcp/server.ts` MCP handler mounted at `/mcp`; test connects SDK `Client` on port 0 and lists exactly the four tools (spec 02)
 
